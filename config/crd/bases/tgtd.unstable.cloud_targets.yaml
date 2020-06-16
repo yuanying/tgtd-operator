@@ -16,7 +16,7 @@ spec:
     shortNames:
     - tgt
     singular: target
-  scope: Namespaced
+  scope: Cluster
   subresources:
     status: {}
   validation:

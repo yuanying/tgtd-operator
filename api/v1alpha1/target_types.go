@@ -96,7 +96,7 @@ type TargetCondition struct {
 // +kubebuilder:object:root=true
 
 // Target is the Schema for the targets API
-// +kubebuilder:resource:shortName=tgt
+// +kubebuilder:resource:shortName=tgt,scope=Cluster
 // +kubebuilder:subresource:status
 type Target struct {
 	metav1.TypeMeta   `json:",inline"`
