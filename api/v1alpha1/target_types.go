@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,19 +29,75 @@ type TargetSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of Target. Edit Target_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// TargetNodeName is a node name where the target will be placed.
+	TargetNodeName string `json:"targetNodeName,omitempty"`
+
+	// TID is an id of the target
+	// +kubebuilder:validation:Required
+	TID int32 `json:"tid,omitempty"`
+
+	// IQN is an iqn of the target
+	// +kubebuilder:validation:Required
+	IQN string `json:"iqn,omitempty"`
+
+	// InitiatorAddresses is a list of initiator address. If "All" is specified, any addresses are allowed.
+	InitiatorAddresses []string `json:"initiatorAddresses,omitempty"`
+
+	// LUNs is a list of LUNs
+	LUNs []TargetLUN `json:"targetLUNs,omitempty"`
+}
+
+// TargetLun is the specification of LUN
+type TargetLUN struct {
+	// LID is an id of the LUN
+	// +kubebuilder:validation:Required
+	LID int32 `json:"lid,omitempty"`
+
+	// BackingStore is a path of the backing store
+	// +kubebuilder:validation:Required
+	BackingStore string `json:"backingStore,omitempty"`
+
+	// BSType is a backing store type
+	BSType *string `json:"bsType,omitempty"`
+
+	// BSOpts is a options for backing store
+	BSOpts *string `json:"bsOpts,omitempty"`
 }
 
 // TargetStatus defines the observed state of Target
 type TargetStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Conditions are the current state of Target
+	Conditions []TargetCondition `json:"conditions,omitempty"`
+	// ObservedGeneration is the last generation observed by the controller.
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+}
+
+// TargetConditionType is a valid value for TargetCondition.Type
+type TargetConditionType string
+
+const (
+	// TargetConditionTypeReady means that API server on the Target is ready for service.
+	TargetConditionReady TargetConditionType = "Ready"
+)
+
+type TargetCondition struct {
+	// Type is the type of this condition.
+	Type TargetConditionType `json:"type,omitempty"`
+	// Status is the status of this condition.
+	Status corev1.ConditionStatus `json:"status,omitempty"`
+	// LastTransitionTime is the last time the condition transitioned from one status to another.
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
+	// Reason is the one-word, CamelCase reason about the last transition.
+	Reason string `json:"reason,omitempty"`
+	// Message is human readable message about the last transition.
+	Message string `json:"message,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
 // Target is the Schema for the targets API
+// +kubebuilder:resource:shortName=tgt
+// +kubebuilder:subresource:status
 type Target struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

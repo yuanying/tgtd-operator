@@ -13,8 +13,12 @@ spec:
     kind: Target
     listKind: TargetList
     plural: targets
+    shortNames:
+    - tgt
     singular: target
   scope: Namespaced
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: Target is the Schema for the targets API
@@ -34,13 +38,77 @@ spec:
         spec:
           description: TargetSpec defines the desired state of Target
           properties:
-            foo:
-              description: Foo is an example field of Target. Edit Target_types.go
-                to remove/update
+            initiatorAddresses:
+              description: InitiatorAddresses is a list of initiator address. If "All"
+                is specified, any addresses are allowed.
+              items:
+                type: string
+              type: array
+            iqn:
+              description: IQN is an iqn of the target
               type: string
+            targetLUNs:
+              description: LUNs is a list of LUNs
+              items:
+                description: TargetLun is the specification of LUN
+                properties:
+                  backingStore:
+                    description: BackingStore is a path of the backing store
+                    type: string
+                  bsOpts:
+                    description: BSOpts is a options for backing store
+                    type: string
+                  bsType:
+                    description: BSType is a backing store type
+                    type: string
+                  lid:
+                    description: LID is an id of the LUN
+                    format: int32
+                    type: integer
+                type: object
+              type: array
+            targetNodeName:
+              description: TargetNodeName is a node name where the target will be
+                placed.
+              type: string
+            tid:
+              description: TID is an id of the target
+              format: int32
+              type: integer
           type: object
         status:
           description: TargetStatus defines the observed state of Target
+          properties:
+            conditions:
+              description: Conditions are the current state of Target
+              items:
+                properties:
+                  lastTransitionTime:
+                    description: LastTransitionTime is the last time the condition
+                      transitioned from one status to another.
+                    format: date-time
+                    type: string
+                  message:
+                    description: Message is human readable message about the last
+                      transition.
+                    type: string
+                  reason:
+                    description: Reason is the one-word, CamelCase reason about the
+                      last transition.
+                    type: string
+                  status:
+                    description: Status is the status of this condition.
+                    type: string
+                  type:
+                    description: Type is the type of this condition.
+                    type: string
+                type: object
+              type: array
+            observedGeneration:
+              description: ObservedGeneration is the last generation observed by the
+                controller.
+              format: int64
+              type: integer
           type: object
       type: object
   version: v1alpha1
