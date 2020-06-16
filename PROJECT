@@ -1,0 +1,7 @@
+domain: unstable.cloud
+repo: github.com/yuanying/tgtd-operator
+resources:
+- group: tgtd
+  kind: Target
+  version: v1alpha1
+version: "2"
