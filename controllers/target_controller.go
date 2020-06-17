@@ -20,9 +20,12 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	tgtdv1alpha1 "github.com/yuanying/tgtd-operator/api/v1alpha1"
 )
@@ -30,18 +33,31 @@ import (
 // TargetReconciler reconciles a Target object
 type TargetReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log      logr.Logger
+	Scheme   *runtime.Scheme
+	NodeName string
 }
 
 // +kubebuilder:rbac:groups=tgtd.unstable.cloud,resources=targets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=tgtd.unstable.cloud,resources=targets/status,verbs=get;update;patch
 
 func (r *TargetReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	_ = context.Background()
-	_ = r.Log.WithValues("target", req.NamespacedName)
+	ctx := context.Background()
+	log := r.Log.WithValues("target", req.NamespacedName)
 
-	// your logic here
+	target := &tgtdv1alpha1.Target{}
+	if err := r.Get(ctx, req.NamespacedName, target); err != nil {
+		if apierrors.IsNotFound(err) {
+			log.Info("Unable to fetch Target - skipping")
+			return ctrl.Result{}, nil
+		}
+		log.Error(err, "Unable to fetch Target")
+		return ctrl.Result{}, err
+	}
+	if target.Spec.TargetNodeName != r.NodeName {
+		log.Info("TargetNodeName is different -- skipping", "TargetNodeName", r.NodeName)
+		return ctrl.Result{}, nil
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -49,5 +65,10 @@ func (r *TargetReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 func (r *TargetReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tgtdv1alpha1.Target{}).
+		WithEventFilter(predicate.Funcs{
+			DeleteFunc: func(e event.DeleteEvent) bool {
+				return false
+			},
+		}).
 		Complete(r)
 }
