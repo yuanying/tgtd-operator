@@ -18,7 +18,7 @@ package controllers
 
 import (
 	"context"
-	// "fmt"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	// corev1 "k8s.io/api/core/v1"
@@ -73,6 +73,15 @@ func (r *TargetReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, err
 	}
 
+	actual, err := r.getActualState(target)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err := r.reconcileLUNs(log, target, actual); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -103,6 +112,76 @@ func (r *TargetReconciler) createOrUpdateTarget(log logr.Logger, target *tgtdv1a
 		if err = r.TgtAdm.CreateTarget(tid, target.Spec.IQN); err != nil {
 			log.Error(err, "Can't create target")
 			return err
+		}
+	}
+	return nil
+}
+
+func (r *TargetReconciler) getActualState(target *tgtdv1alpha1.Target) (*tgtdv1alpha1.TargetActual, error) {
+	iqn := target.Spec.IQN
+	if targets, err := r.TgtAdm.GetTargets(); err != nil {
+		return nil, err
+	} else {
+		for i := range targets {
+			t := &targets[i]
+			if t.IQN == iqn {
+				return t, nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("Target not found, IQN: %v", iqn)
+}
+
+func (r *TargetReconciler) getLUN(lun int32, luns []tgtdv1alpha1.TargetLUN) *tgtdv1alpha1.TargetLUN {
+	for i := range luns {
+		l := &luns[i]
+		if l.LID == lun {
+			return l
+		}
+	}
+	return nil
+}
+
+func (r *TargetReconciler) reconcileLUNs(log logr.Logger, target *tgtdv1alpha1.Target, actual *tgtdv1alpha1.TargetActual) error {
+	for i := range target.Spec.LUNs {
+		l := &target.Spec.LUNs[i]
+		al := r.getLUN(l.LID, actual.LUNs)
+		if al != nil {
+			if al.BackingStore != l.BackingStore {
+				log.V(1).Info("BackingStore is missmatch",
+					"LUN", l.LID,
+					"DesiredBackingStore", l.BackingStore,
+					"ObservedBackingStore", al.BackingStore,
+				)
+			}
+		} else {
+			if l.BSType != nil {
+				bsopts := ""
+				if l.BSOpts != nil {
+					bsopts = *l.BSOpts
+				}
+				if err := r.TgtAdm.AddLun(int(actual.TID), int(l.LID), l.BackingStore, *l.BSType, bsopts); err != nil {
+					return err
+				}
+			} else {
+				if err := r.TgtAdm.AddLunBackedByFile(int(actual.TID), int(l.LID), l.BackingStore); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return r.deleteStaledLUNs(log, target, actual)
+}
+
+func (r *TargetReconciler) deleteStaledLUNs(log logr.Logger, target *tgtdv1alpha1.Target, actual *tgtdv1alpha1.TargetActual) error {
+	for i := range actual.LUNs {
+		al := &actual.LUNs[i]
+		l := r.getLUN(al.LID, target.Spec.LUNs)
+		if l == nil {
+			if err := r.TgtAdm.DeleteLun(int(actual.TID), int(al.LID)); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

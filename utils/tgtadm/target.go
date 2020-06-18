@@ -9,6 +9,8 @@ import (
 
 	"github.com/longhorn/go-iscsi-helper/iscsi"
 	longhornutil "github.com/longhorn/go-iscsi-helper/util"
+
+	tgtdv1alpha1 "github.com/yuanying/tgtd-operator/api/v1alpha1"
 )
 
 var (
@@ -29,21 +31,7 @@ type TgtAdm interface {
 	CloseConnection(tid int, sid, cid string) error
 	FindNextAvailableTargetID() (int, error)
 
-	GetTargets() ([]Target, error)
-}
-
-type Target struct {
-	TID      int32
-	IQN      string
-	LUNs     []LUN
-	Accounts []string
-	ACLs     []string
-}
-
-type LUN struct {
-	ID                int32
-	BackingStorePath  string
-	BackingStoreFlags string
+	GetTargets() ([]tgtdv1alpha1.TargetActual, error)
 }
 
 type TgtAdmLonghornHelper struct{}
@@ -93,7 +81,7 @@ func (t *TgtAdmLonghornHelper) GetAccounts() ([]string, error) {
 	}
 	return parseShowAccount(output)
 }
-func (t *TgtAdmLonghornHelper) GetTargets() (targets []Target, err error) {
+func (t *TgtAdmLonghornHelper) GetTargets() (targets []tgtdv1alpha1.TargetActual, err error) {
 	opts := []string{
 		"--lld", "iscsi",
 		"--op", "show",
@@ -124,8 +112,8 @@ func parseShowAccount(raw string) ([]string, error) {
 	return accounts, nil
 }
 
-func parseShowTarget(raw string) (targets []Target, err error) {
-	targets = make([]Target, 0)
+func parseShowTarget(raw string) (targets []tgtdv1alpha1.TargetActual, err error) {
+	targets = make([]tgtdv1alpha1.TargetActual, 0)
 	scanner := bufio.NewScanner(strings.NewReader(raw))
 	section := ""
 	for scanner.Scan() {
@@ -133,7 +121,7 @@ func parseShowTarget(raw string) (targets []Target, err error) {
 		targetMatch := targetPrefix.FindStringSubmatch(line)
 		if len(targetMatch) > 0 {
 			section = ""
-			target := Target{
+			target := tgtdv1alpha1.TargetActual{
 				IQN: targetMatch[2],
 			}
 			tid, err := strconv.Atoi(strings.TrimSpace(targetMatch[1]))
@@ -150,7 +138,7 @@ func parseShowTarget(raw string) (targets []Target, err error) {
 			section = "acl"
 		} else if section == "lun" {
 			if strings.HasPrefix(line, "LUN:") {
-				currentLUN := LUN{}
+				currentLUN := tgtdv1alpha1.TargetLUN{}
 				lidstrs := strings.Split(line, ":")
 				if len(lidstrs) != 2 {
 					return nil, fmt.Errorf("Failed to parse and get LUN id: %v", line)
@@ -159,7 +147,7 @@ func parseShowTarget(raw string) (targets []Target, err error) {
 				if err != nil {
 					return nil, err
 				}
-				currentLUN.ID = int32(lid)
+				currentLUN.LID = int32(lid)
 				target := currentTarget(targets)
 				target.LUNs = append(target.LUNs, currentLUN)
 			} else if strings.HasPrefix(line, "Backing store path:") {
@@ -169,7 +157,7 @@ func parseShowTarget(raw string) (targets []Target, err error) {
 				}
 				target := currentTarget(targets)
 				bspath := strings.TrimSpace(bspaths[1])
-				target.LUNs[len(target.LUNs)-1].BackingStorePath = bspath
+				target.LUNs[len(target.LUNs)-1].BackingStore = bspath
 			}
 		} else if section == "account" {
 			target := currentTarget(targets)
@@ -182,6 +170,6 @@ func parseShowTarget(raw string) (targets []Target, err error) {
 	return
 }
 
-func currentTarget(targets []Target) *Target {
+func currentTarget(targets []tgtdv1alpha1.TargetActual) *tgtdv1alpha1.TargetActual {
 	return &targets[len(targets)-1]
 }

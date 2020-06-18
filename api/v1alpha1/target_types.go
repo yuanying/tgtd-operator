@@ -40,7 +40,7 @@ type TargetSpec struct {
 	InitiatorAddresses []string `json:"initiatorAddresses,omitempty"`
 
 	// LUNs is a list of LUNs
-	LUNs []TargetLUN `json:"targetLUNs,omitempty"`
+	LUNs []TargetLUN `json:"luns,omitempty"`
 }
 
 // TargetLun is the specification of LUN
@@ -60,12 +60,32 @@ type TargetLUN struct {
 	BSOpts *string `json:"bsOpts,omitempty"`
 }
 
+// TargetActual is the observed information of Target
+type TargetActual struct {
+	// TID is the observed tid
+	TID int32 `json:"tid,omitempty"`
+
+	// IQN is the observed IQN
+	IQN string `json:"iqn,omitempty"`
+
+	// LUNs is the observed LUNs
+	LUNs []TargetLUN `json:"luns,omitempty"`
+
+	// Accounts is the observed Accounts
+	Accounts []string `json:"accounts,omitempty"`
+
+	// ACLs is the observed ACLs
+	ACLs []string `json:"acls,omitempty"`
+}
+
 // TargetStatus defines the observed state of Target
 type TargetStatus struct {
 	// Conditions are the current state of Target
 	Conditions []TargetCondition `json:"conditions,omitempty"`
 	// ObservedGeneration is the last generation observed by the controller.
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+	// ObservedState is the actual target information
+	ObservedState TargetActual `json:"observedState,omitempty"`
 }
 
 // TargetConditionType is a valid value for TargetCondition.Type

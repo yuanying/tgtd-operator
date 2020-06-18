@@ -3,6 +3,8 @@ package tgtadm
 import (
 	"reflect"
 	"testing"
+
+	tgtdv1alpha1 "github.com/yuanying/tgtd-operator/api/v1alpha1"
 )
 
 var testAccountsStr = `
@@ -152,26 +154,26 @@ func TestParseTargetsOutput(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parseShowTarget should be success: %v", err)
 	}
-	want := []Target{
+	want := []tgtdv1alpha1.TargetActual{
 		{
 			TID: 1,
 			IQN: "iqn.2020-04.cloud.unstable:target1",
-			LUNs: []LUN{
+			LUNs: []tgtdv1alpha1.TargetLUN{
 				{
-					ID:               0,
-					BackingStorePath: "None",
+					LID:          0,
+					BackingStore: "None",
 				},
 				{
-					ID:               1,
-					BackingStorePath: "/dev/zvol/tank/vol",
+					LID:          1,
+					BackingStore: "/dev/zvol/tank/vol",
 				},
 				{
-					ID:               3,
-					BackingStorePath: "/dev/zvol/tank/vol2",
+					LID:          3,
+					BackingStore: "/dev/zvol/tank/vol2",
 				},
 				{
-					ID:               13,
-					BackingStorePath: "/dev/zvol/tank/vol3",
+					LID:          13,
+					BackingStore: "/dev/zvol/tank/vol3",
 				},
 			},
 			Accounts: []string{"user1"},
@@ -180,14 +182,14 @@ func TestParseTargetsOutput(t *testing.T) {
 		{
 			TID: 3,
 			IQN: "iqn.2020-04.cloud.unstable:target3",
-			LUNs: []LUN{
+			LUNs: []tgtdv1alpha1.TargetLUN{
 				{
-					ID:               0,
-					BackingStorePath: "None",
+					LID:          0,
+					BackingStore: "None",
 				},
 				{
-					ID:               1,
-					BackingStorePath: "/dev/zvol/tank/vol",
+					LID:          1,
+					BackingStore: "/dev/zvol/tank/vol",
 				},
 			},
 			Accounts: []string{"user1", "user2", "user3"},
@@ -196,10 +198,10 @@ func TestParseTargetsOutput(t *testing.T) {
 		{
 			TID: 4,
 			IQN: "iqn.2020-04.cloud.unstable:target4",
-			LUNs: []LUN{
+			LUNs: []tgtdv1alpha1.TargetLUN{
 				{
-					ID:               0,
-					BackingStorePath: "None",
+					LID:          0,
+					BackingStore: "None",
 				},
 			},
 		},

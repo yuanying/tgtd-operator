@@ -47,7 +47,7 @@ spec:
             iqn:
               description: IQN is an iqn of the target
               type: string
-            targetLUNs:
+            luns:
               description: LUNs is a list of LUNs
               items:
                 description: TargetLun is the specification of LUN
@@ -105,6 +105,47 @@ spec:
                 controller.
               format: int64
               type: integer
+            observedState:
+              description: ObservedState is the actual target information
+              properties:
+                accounts:
+                  description: Accounts is the observed Accounts
+                  items:
+                    type: string
+                  type: array
+                acls:
+                  description: ACLs is the observed ACLs
+                  items:
+                    type: string
+                  type: array
+                iqn:
+                  description: IQN is the observed IQN
+                  type: string
+                luns:
+                  description: LUNs is the observed LUNs
+                  items:
+                    description: TargetLun is the specification of LUN
+                    properties:
+                      backingStore:
+                        description: BackingStore is a path of the backing store
+                        type: string
+                      bsOpts:
+                        description: BSOpts is a options for backing store
+                        type: string
+                      bsType:
+                        description: BSType is a backing store type
+                        type: string
+                      lid:
+                        description: LID is an id of the LUN
+                        format: int32
+                        type: integer
+                    type: object
+                  type: array
+                tid:
+                  description: TID is the observed tid
+                  format: int32
+                  type: integer
+              type: object
           type: object
       type: object
   version: v1alpha1
