@@ -30,4 +30,3 @@ EXPOSE 3260
 
 COPY ./entrypoint.sh /
 ENTRYPOINT ["/entrypoint.sh"]
-

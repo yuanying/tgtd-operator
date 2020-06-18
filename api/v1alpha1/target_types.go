@@ -85,7 +85,7 @@ type TargetStatus struct {
 	// ObservedGeneration is the last generation observed by the controller.
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 	// ObservedState is the actual target information
-	ObservedState TargetActual `json:"observedState,omitempty"`
+	ObservedState *TargetActual `json:"observedState,omitempty"`
 }
 
 // TargetConditionType is a valid value for TargetCondition.Type
@@ -94,6 +94,12 @@ type TargetConditionType string
 const (
 	// TargetConditionTypeReady means that API server on the Target is ready for service.
 	TargetConditionReady TargetConditionType = "Ready"
+
+	// TargetTargetFailed means that reconciling target is failed on node.
+	TargetTargetFailed TargetConditionType = "TargetFailed"
+
+	// TargetLUNFailed means that reconcilation of LUNs is failed on node.
+	TargetLUNFailed TargetConditionType = "LUNFailed"
 )
 
 type TargetCondition struct {
