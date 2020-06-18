@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,6 +29,7 @@ import (
 
 	tgtdv1alpha1 "github.com/yuanying/tgtd-operator/api/v1alpha1"
 	"github.com/yuanying/tgtd-operator/controllers"
+	"github.com/yuanying/tgtd-operator/utils/tgtadm"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -44,8 +46,10 @@ func init() {
 }
 
 func main() {
+	var nodeName string
 	var metricsAddr string
 	var enableLeaderElection bool
+	flag.StringVar(&nodeName, "node-name", "", "Node name to operate tgtd.")
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
@@ -53,6 +57,11 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+
+	if nodeName == "" {
+		setupLog.Error(fmt.Errorf("Node name should be specified"), "`--node-name` is required")
+		os.Exit(1)
+	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -67,11 +76,21 @@ func main() {
 	}
 
 	if err = (&controllers.TargetReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Target"),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Log:      ctrl.Log.WithName("controllers").WithName("Target"),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("target-controller"),
+		TgtAdm:   &tgtadm.TgtAdmLonghornHelper{},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Target")
+		os.Exit(1)
+	}
+	if err = (&controllers.LUNReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("LUN"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "LUN")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

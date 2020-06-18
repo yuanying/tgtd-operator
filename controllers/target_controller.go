@@ -18,16 +18,20 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
+	"github.com/yuanying/tgtd-operator/api"
 	tgtdv1alpha1 "github.com/yuanying/tgtd-operator/api/v1alpha1"
+	"github.com/yuanying/tgtd-operator/utils/tgtadm"
 )
 
 // TargetReconciler reconciles a Target object
@@ -35,6 +39,8 @@ type TargetReconciler struct {
 	client.Client
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
+	Recorder record.EventRecorder
+	TgtAdm   tgtadm.TgtAdm
 	NodeName string
 }
 
@@ -59,16 +65,63 @@ func (r *TargetReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, nil
 	}
 
+	if !target.DeletionTimestamp.IsZero() {
+		return ctrl.Result{}, r.deleteTarget(log, target)
+	}
+
+	if err := r.createOrUpdateTarget(log, target); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{}, nil
+}
+
+func (r *TargetReconciler) deleteTarget(log logr.Logger, target *tgtdv1alpha1.Target) error {
+	return nil
+}
+
+func (r *TargetReconciler) createOrUpdateTarget(log logr.Logger, target *tgtdv1alpha1.Target) error {
+	if !containsFinalizer(target, api.TargetCleanupFinalizer) {
+		controllerutil.AddFinalizer(target, api.TargetCleanupFinalizer)
+		if err := r.Update(context.Background(), target); err != nil {
+			log.Error(err, "Unable to update")
+			return err
+		}
+	}
+	tid, err := r.TgtAdm.GetTargetTid(target.Spec.IQN)
+	if err != nil {
+		log.Error(err, "Can't retrieve Target tid", "IQN", target.Spec.IQN)
+		return err
+	}
+	if tid == -1 {
+		log.Info("Target doesn't exist, try to create")
+		if err = r.TgtAdm.CreateTarget(int(target.Spec.TID), target.Spec.IQN); err != nil {
+			log.Error(err, "Can't create target")
+			return err
+		}
+	} else if tid != int(target.Spec.TID) {
+		err = fmt.Errorf("TID missmatch!! exptected tid: %v, but got %v", target.Spec.TID, tid)
+		log.Error(err, "Actual TID is invalid")
+		r.Recorder.Eventf(target, corev1.EventTypeWarning, "TIDMissmatch", "%s should have TID: %v, but got %v",
+			target.Spec.IQN, target.Spec.TID, tid,
+		)
+		return err
+	}
+	return nil
+}
+
+func containsFinalizer(target *tgtdv1alpha1.Target, finalizer string) bool {
+	f := target.GetFinalizers()
+	for _, e := range f {
+		if e == finalizer {
+			return true
+		}
+	}
+	return false
 }
 
 func (r *TargetReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tgtdv1alpha1.Target{}).
-		WithEventFilter(predicate.Funcs{
-			DeleteFunc: func(e event.DeleteEvent) bool {
-				return false
-			},
-		}).
 		Complete(r)
 }
