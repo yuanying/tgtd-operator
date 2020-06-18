@@ -7,7 +7,6 @@ require (
 	github.com/longhorn/go-iscsi-helper v0.0.0-20200601183015-ca8b762c2f38
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.8.1
-	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15
 	k8s.io/api v0.18.2
 	k8s.io/apimachinery v0.18.2
 	k8s.io/client-go v0.18.2
