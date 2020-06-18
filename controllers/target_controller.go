@@ -213,9 +213,14 @@ func (r *TargetReconciler) reconcileLUNs(log logr.Logger, target *tgtdv1alpha1.T
 func (r *TargetReconciler) deleteStaledLUNs(log logr.Logger, target *tgtdv1alpha1.Target, actual *tgtdv1alpha1.TargetActual) error {
 	for i := range actual.LUNs {
 		al := &actual.LUNs[i]
+		if al.LID == 0 {
+			log.V(4).Info("LID 0 should be ignored")
+			continue
+		}
 		l := r.getLUN(al.LID, target.Spec.LUNs)
 		if l == nil {
 			if err := r.TgtAdm.DeleteLun(int(actual.TID), int(al.LID)); err != nil {
+				log.Error(err, "Failed to delete LUN: %v, Path: %v", al.LID, al.BackingStore)
 				return err
 			}
 		}
