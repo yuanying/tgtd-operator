@@ -1,5 +1,18 @@
 # Build the manager binary
-FROM golang:1.13 as builder
+FROM ubuntu:20.04 as base
+
+RUN apt-get update && apt-get install tgt curl -y
+
+ENV GOVERSION 1.13.12
+ENV PATH $PATH:/usr/local/go/bin:/usr/local/kubebuilder/bin
+
+RUN cd /tmp && curl -O https://dl.google.com/go/go${GOVERSION}.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go${GOVERSION}.linux-amd64.tar.gz
+RUN os=$(go env GOOS) && \
+    arch=$(go env GOARCH) && \
+    curl -L https://go.kubebuilder.io/dl/2.3.1/${os}/${arch} | tar -xz -C /tmp/ && \
+    mv /tmp/kubebuilder_2.3.1_${os}_${arch} /usr/local/kubebuilder
+
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -15,16 +28,25 @@ COPY api/ api/
 COPY controllers/ controllers/
 COPY utils/ utils/
 
-# Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
+FROM base as unit-test
 
-FROM ubuntu:20.04
+ENV CGO_ENABLED=0
+# RUN --mount=target=. \
+#     --mount=type=cache,target=/root/.cache/go-build \
+RUN go test -v ./...
+
+FROM base as builder
+
+# Build
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o tgtd-operator main.go
+
+FROM ubuntu:20.04 as bin
 USER root
 
-WORKDIR /
-COPY --from=builder /workspace/manager .
-
 RUN apt-get update && apt-get install tgt -y
+
+WORKDIR /
+COPY --from=builder /workspace/tgtd-operator .
 
 EXPOSE 3260
 
