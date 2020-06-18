@@ -18,10 +18,10 @@ package controllers
 
 import (
 	"context"
-	"fmt"
+	// "fmt"
 
 	"github.com/go-logr/logr"
-	corev1 "k8s.io/api/core/v1"
+	// corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -95,17 +95,15 @@ func (r *TargetReconciler) createOrUpdateTarget(log logr.Logger, target *tgtdv1a
 	}
 	if tid == -1 {
 		log.Info("Target doesn't exist, try to create")
-		if err = r.TgtAdm.CreateTarget(int(target.Spec.TID), target.Spec.IQN); err != nil {
+		tid, err := r.TgtAdm.FindNextAvailableTargetID()
+		if err != nil {
+			log.Error(err, "Can't get available target id")
+			return err
+		}
+		if err = r.TgtAdm.CreateTarget(tid, target.Spec.IQN); err != nil {
 			log.Error(err, "Can't create target")
 			return err
 		}
-	} else if tid != int(target.Spec.TID) {
-		err = fmt.Errorf("TID missmatch!! exptected tid: %v, but got %v", target.Spec.TID, tid)
-		log.Error(err, "Actual TID is invalid")
-		r.Recorder.Eventf(target, corev1.EventTypeWarning, "TIDMissmatch", "%s should have TID: %v, but got %v",
-			target.Spec.IQN, target.Spec.TID, tid,
-		)
-		return err
 	}
 	return nil
 }

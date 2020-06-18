@@ -71,10 +71,6 @@ spec:
               description: TargetNodeName is a node name where the target will be
                 placed.
               type: string
-            tid:
-              description: TID is an id of the target
-              format: int32
-              type: integer
           type: object
         status:
           description: TargetStatus defines the observed state of Target

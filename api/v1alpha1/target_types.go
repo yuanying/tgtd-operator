@@ -32,10 +32,6 @@ type TargetSpec struct {
 	// TargetNodeName is a node name where the target will be placed.
 	TargetNodeName string `json:"targetNodeName,omitempty"`
 
-	// TID is an id of the target
-	// +kubebuilder:validation:Required
-	TID int32 `json:"tid,omitempty"`
-
 	// IQN is an iqn of the target
 	// +kubebuilder:validation:Required
 	IQN string `json:"iqn,omitempty"`
