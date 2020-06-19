@@ -1,10 +1,10 @@
 
 ---
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.2.5
+    controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
   name: targets.tgtd.unstable.cloud
 spec:
@@ -17,142 +17,141 @@ spec:
     - tgt
     singular: target
   scope: Cluster
-  subresources:
-    status: {}
-  validation:
-    openAPIV3Schema:
-      description: Target is the Schema for the targets API
-      properties:
-        apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-          type: string
-        kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-          type: string
-        metadata:
-          type: object
-        spec:
-          description: TargetSpec defines the desired state of Target
-          properties:
-            initiatorAddresses:
-              description: InitiatorAddresses is a list of initiator address. If "All"
-                is specified, any addresses are allowed.
-              items:
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Target is the Schema for the targets API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: TargetSpec defines the desired state of Target
+            properties:
+              initiatorAddresses:
+                description: InitiatorAddresses is a list of initiator address. If
+                  "All" is specified, any addresses are allowed.
+                items:
+                  type: string
+                type: array
+              iqn:
+                description: IQN is an iqn of the target
                 type: string
-              type: array
-            iqn:
-              description: IQN is an iqn of the target
-              type: string
-            luns:
-              description: LUNs is a list of LUNs
-              items:
-                description: TargetLun is the specification of LUN
+              luns:
+                description: LUNs is a list of LUNs
+                items:
+                  description: TargetLun is the specification of LUN
+                  properties:
+                    backingStore:
+                      description: BackingStore is a path of the backing store
+                      type: string
+                    bsOpts:
+                      description: BSOpts is a options for backing store
+                      type: string
+                    bsType:
+                      description: BSType is a backing store type
+                      type: string
+                    lid:
+                      description: LID is an id of the LUN
+                      format: int32
+                      type: integer
+                  type: object
+                type: array
+              targetNodeName:
+                description: TargetNodeName is a node name where the target will be
+                  placed.
+                type: string
+            type: object
+          status:
+            description: TargetStatus defines the observed state of Target
+            properties:
+              conditions:
+                description: Conditions are the current state of Target
+                items:
+                  properties:
+                    lastTransitionTime:
+                      description: LastTransitionTime is the last time the condition
+                        transitioned from one status to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: Message is human readable message about the last
+                        transition.
+                      type: string
+                    reason:
+                      description: Reason is the one-word, CamelCase reason about
+                        the last transition.
+                      type: string
+                    status:
+                      description: Status is the status of this condition.
+                      type: string
+                    type:
+                      description: Type is the type of this condition.
+                      type: string
+                  type: object
+                type: array
+              observedGeneration:
+                description: ObservedGeneration is the last generation observed by
+                  the controller.
+                format: int64
+                type: integer
+              observedState:
+                description: ObservedState is the actual target information
                 properties:
-                  backingStore:
-                    description: BackingStore is a path of the backing store
+                  accounts:
+                    description: Accounts is the observed Accounts
+                    items:
+                      type: string
+                    type: array
+                  acls:
+                    description: ACLs is the observed ACLs
+                    items:
+                      type: string
+                    type: array
+                  iqn:
+                    description: IQN is the observed IQN
                     type: string
-                  bsOpts:
-                    description: BSOpts is a options for backing store
-                    type: string
-                  bsType:
-                    description: BSType is a backing store type
-                    type: string
-                  lid:
-                    description: LID is an id of the LUN
+                  luns:
+                    description: LUNs is the observed LUNs
+                    items:
+                      description: TargetLun is the specification of LUN
+                      properties:
+                        backingStore:
+                          description: BackingStore is a path of the backing store
+                          type: string
+                        bsOpts:
+                          description: BSOpts is a options for backing store
+                          type: string
+                        bsType:
+                          description: BSType is a backing store type
+                          type: string
+                        lid:
+                          description: LID is an id of the LUN
+                          format: int32
+                          type: integer
+                      type: object
+                    type: array
+                  tid:
+                    description: TID is the observed tid
                     format: int32
                     type: integer
                 type: object
-              type: array
-            targetNodeName:
-              description: TargetNodeName is a node name where the target will be
-                placed.
-              type: string
-          type: object
-        status:
-          description: TargetStatus defines the observed state of Target
-          properties:
-            conditions:
-              description: Conditions are the current state of Target
-              items:
-                properties:
-                  lastTransitionTime:
-                    description: LastTransitionTime is the last time the condition
-                      transitioned from one status to another.
-                    format: date-time
-                    type: string
-                  message:
-                    description: Message is human readable message about the last
-                      transition.
-                    type: string
-                  reason:
-                    description: Reason is the one-word, CamelCase reason about the
-                      last transition.
-                    type: string
-                  status:
-                    description: Status is the status of this condition.
-                    type: string
-                  type:
-                    description: Type is the type of this condition.
-                    type: string
-                type: object
-              type: array
-            observedGeneration:
-              description: ObservedGeneration is the last generation observed by the
-                controller.
-              format: int64
-              type: integer
-            observedState:
-              description: ObservedState is the actual target information
-              properties:
-                accounts:
-                  description: Accounts is the observed Accounts
-                  items:
-                    type: string
-                  type: array
-                acls:
-                  description: ACLs is the observed ACLs
-                  items:
-                    type: string
-                  type: array
-                iqn:
-                  description: IQN is the observed IQN
-                  type: string
-                luns:
-                  description: LUNs is the observed LUNs
-                  items:
-                    description: TargetLun is the specification of LUN
-                    properties:
-                      backingStore:
-                        description: BackingStore is a path of the backing store
-                        type: string
-                      bsOpts:
-                        description: BSOpts is a options for backing store
-                        type: string
-                      bsType:
-                        description: BSType is a backing store type
-                        type: string
-                      lid:
-                        description: LID is an id of the LUN
-                        format: int32
-                        type: integer
-                    type: object
-                  type: array
-                tid:
-                  description: TID is the observed tid
-                  format: int32
-                  type: integer
-              type: object
-          type: object
-      type: object
-  version: v1alpha1
-  versions:
-  - name: v1alpha1
+            type: object
+        type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""
