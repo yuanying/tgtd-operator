@@ -67,7 +67,6 @@ spec:
                       type: integer
                   required:
                   - backingStore
-                  - lid
                   type: object
                 type: array
               targetNodeName:
@@ -147,7 +146,6 @@ spec:
                           type: integer
                       required:
                       - backingStore
-                      - lid
                       type: object
                     type: array
                   tid:

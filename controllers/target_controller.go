@@ -267,7 +267,7 @@ func (r *TargetReconciler) updateStatus(log logr.Logger, target *tgtdv1alpha1.Ta
 	target.Status.ObservedState = observedTarget
 
 	if err := r.Status().Update(context.Background(), target); err != nil {
-		log.Error(err, "Unable to update Target status")
+		log.Error(err, "Unable to update Target status", "observedTarget", observedTarget)
 		return err
 	}
 
