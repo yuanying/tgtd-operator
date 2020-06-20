@@ -1,0 +1,33 @@
+name: Integration test using docker build
+
+on:
+  pull_request:
+    branches:
+      - 'master'
+  push:
+    branches:
+      - 'master'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+    -
+      # https://github.com/actions/checkout
+      name: Checkout
+      uses: actions/checkout@v1
+
+    -
+      name: UnitTest
+      uses: whoan/docker-build-with-cache-action@v5
+      with:
+        username: yuanying
+        password: "${{ secrets.GITHUB_TOKEN }}"
+        image_name: yuanying/tgtd-operator
+        image_tag: test
+        push_git_tag: false
+        registry: docker.pkg.github.com
+        dockerfile: Dockerfile
+        build_extra_args: "--target unit-test "
+
