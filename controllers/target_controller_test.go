@@ -96,6 +96,11 @@ var _ = Describe("TargetController", func() {
 			}, timeout, interval).Should(BeTrue())
 
 			Expect(iscsi.GetTargetTid(testTargetIQN)).ToNot(Equal(-1))
+			luns := fetched.Status.ObservedState.LUNs
+			Expect(len(luns)).To(Equal(1))
+			defaultLUN := luns[0]
+			Expect(defaultLUN.LID).To(Equal(int32(0)))
+			Expect(defaultLUN.BackingStore).To(Equal("None"))
 
 			By("Add LUNs to fetched Target")
 			updateSpec := spec
@@ -116,6 +121,7 @@ var _ = Describe("TargetController", func() {
 			}, timeout, interval).Should(Equal(2))
 
 			fetchedLUN := fetchedUpdated.Status.ObservedState.LUNs[1]
+			Expect(fetchedLUN.LID).To(Equal(int32(1)))
 			Expect(fetchedLUN.BackingStore).To(Equal(imageFile))
 
 			By("Deleting the Target")

@@ -41,7 +41,6 @@ type TargetSpec struct {
 // TargetLun is the specification of LUN
 type TargetLUN struct {
 	// LID is an id of the LUN
-	// +kubebuilder:validation:Required
 	LID int32 `json:"lid,omitempty"`
 
 	// BackingStore is a path of the backing store
