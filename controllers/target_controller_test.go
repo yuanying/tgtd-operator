@@ -70,8 +70,8 @@ var _ = Describe("TargetController", func() {
 	Context("Target with correct NodeName", func() {
 		It("Should handle target and LUNs correctly", func() {
 			spec := tgtdv1alpha1.TargetSpec{
-				TargetNodeName: testNodeName,
-				IQN:            testTargetIQN,
+				NodeName: testNodeName,
+				IQN:      testTargetIQN,
 			}
 
 			key := types.NamespacedName{

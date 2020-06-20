@@ -61,8 +61,8 @@ func (r *TargetReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		log.Error(err, "Unable to fetch Target")
 		return ctrl.Result{}, err
 	}
-	if target.Spec.TargetNodeName != r.NodeName {
-		log.Info("TargetNodeName is different -- skipping", "TargetNodeName", r.NodeName)
+	if target.Spec.NodeName != r.NodeName {
+		log.Info("NodeName is different -- skipping", "NodeName", r.NodeName)
 		return ctrl.Result{}, nil
 	}
 

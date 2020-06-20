@@ -1,0 +1,24 @@
+# permissions for end users to edit initiatorgroups.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: initiatorgroup-editor-role
+rules:
+- apiGroups:
+  - tgtd.unstable.cloud
+  resources:
+  - initiatorgroups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tgtd.unstable.cloud
+  resources:
+  - initiatorgroups/status
+  verbs:
+  - get

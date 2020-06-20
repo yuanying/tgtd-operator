@@ -1,0 +1,7 @@
+apiVersion: tgtd.unstable.cloud/v1alpha1
+kind: InitiatorGroup
+metadata:
+  name: initiatorgroup-sample
+spec:
+  # Add fields here
+  foo: bar
