@@ -65,12 +65,18 @@ spec:
                       description: LID is an id of the LUN
                       format: int32
                       type: integer
+                  required:
+                  - backingStore
+                  - lid
                   type: object
                 type: array
               targetNodeName:
                 description: TargetNodeName is a node name where the target will be
                   placed.
                 type: string
+            required:
+            - iqn
+            - targetNodeName
             type: object
           status:
             description: TargetStatus defines the observed state of Target
@@ -139,6 +145,9 @@ spec:
                           description: LID is an id of the LUN
                           format: int32
                           type: integer
+                      required:
+                      - backingStore
+                      - lid
                       type: object
                     type: array
                   tid:
