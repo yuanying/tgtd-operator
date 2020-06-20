@@ -68,7 +68,7 @@ func main() {
 		MetricsBindAddress: metricsAddr,
 		Port:               9443,
 		LeaderElection:     enableLeaderElection,
-		LeaderElectionID:   "9a544d75.unstable.cloud",
+		LeaderElectionID:   fmt.Sprintf("%s.9a544d75.unstable.cloud", nodeName),
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -81,6 +81,7 @@ func main() {
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("target-controller"),
 		TgtAdm:   &tgtadm.TgtAdmLonghornHelper{},
+		NodeName: nodeName,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Target")
 		os.Exit(1)
