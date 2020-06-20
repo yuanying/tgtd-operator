@@ -24,7 +24,7 @@ jobs:
       with:
         username: yuanying
         password: "${{ secrets.GITHUB_TOKEN }}"
-        image_name: yuanying/tgtd-operator
+        image_name: yuanying/tgtd-operator/controller
         image_tag: test
         push_git_tag: false
         registry: docker.pkg.github.com
