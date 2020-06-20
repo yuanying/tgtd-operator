@@ -96,6 +96,42 @@ var _ = Describe("TargetController", func() {
 			}, timeout, interval).Should(BeTrue())
 
 			Expect(iscsi.GetTargetTid(testTargetIQN)).ToNot(Equal(-1))
+
+			By("Add LUNs to fetched Target")
+			updateSpec := spec
+			updateSpec.LUNs = []tgtdv1alpha1.TargetLUN{
+				{
+					LID:          1,
+					BackingStore: imageFile,
+				},
+			}
+
+			fetched.Spec = updateSpec
+
+			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
+			fetchedUpdated := &tgtdv1alpha1.Target{}
+			Eventually(func() int {
+				k8sClient.Get(context.Background(), key, fetchedUpdated)
+				return len(fetchedUpdated.Status.ObservedState.LUNs)
+			}, timeout, interval).Should(Equal(2))
+
+			fetchedLUN := fetchedUpdated.Status.ObservedState.LUNs[1]
+			Expect(fetchedLUN.BackingStore).To(Equal(imageFile))
+
+			By("Deleting the Target")
+			Eventually(func() error {
+				f := &tgtdv1alpha1.Target{}
+				k8sClient.Get(context.Background(), key, f)
+				return k8sClient.Delete(context.Background(), f)
+			}, timeout, interval).Should(Succeed())
+
+			Eventually(func() error {
+				f := &tgtdv1alpha1.Target{}
+				return k8sClient.Get(context.Background(), key, f)
+			}, timeout, interval).ShouldNot(Succeed())
+
+			By("Verify deleting the Target")
+			Expect(iscsi.GetTargetTid(testTargetIQN)).To(Equal(-1))
 		})
 	})
 })
