@@ -4,4 +4,7 @@ resources:
 - group: tgtd
   kind: Target
   version: v1alpha1
+- group: tgtd
+  kind: InitiatorGroup
+  version: v1alpha1
 version: "2"

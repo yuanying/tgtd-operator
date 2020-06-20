@@ -1,0 +1,20 @@
+# permissions for end users to view initiatorgroups.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: initiatorgroup-viewer-role
+rules:
+- apiGroups:
+  - tgtd.unstable.cloud
+  resources:
+  - initiatorgroups
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - tgtd.unstable.cloud
+  resources:
+  - initiatorgroups/status
+  verbs:
+  - get

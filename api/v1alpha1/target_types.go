@@ -23,16 +23,13 @@ import (
 
 // TargetSpec defines the desired state of Target
 type TargetSpec struct {
-	// TargetNodeName is a node name where the target will be placed.
+	// NodeName is a node name where the target will be placed.
 	// +kubebuilder:validation:Required
-	TargetNodeName string `json:"targetNodeName,omitempty"`
+	NodeName string `json:"targetNodeName,omitempty"`
 
 	// IQN is an iqn of the target
 	// +kubebuilder:validation:Required
 	IQN string `json:"iqn,omitempty"`
-
-	// InitiatorAddresses is a list of initiator address. If "All" is specified, any addresses are allowed.
-	InitiatorAddresses []string `json:"initiatorAddresses,omitempty"`
 
 	// LUNs is a list of LUNs
 	LUNs []TargetLUN `json:"luns,omitempty"`

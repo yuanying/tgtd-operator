@@ -38,12 +38,6 @@ spec:
           spec:
             description: TargetSpec defines the desired state of Target
             properties:
-              initiatorAddresses:
-                description: InitiatorAddresses is a list of initiator address. If
-                  "All" is specified, any addresses are allowed.
-                items:
-                  type: string
-                type: array
               iqn:
                 description: IQN is an iqn of the target
                 type: string
@@ -70,8 +64,7 @@ spec:
                   type: object
                 type: array
               targetNodeName:
-                description: TargetNodeName is a node name where the target will be
-                  placed.
+                description: NodeName is a node name where the target will be placed.
                 type: string
             required:
             - iqn
