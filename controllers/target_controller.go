@@ -83,11 +83,11 @@ func (r *TargetReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	t := metav1.Now()
 
 	if err := r.createOrUpdateTarget(log, target); err != nil {
-		setTargetConditionReason(target, tgtdv1alpha1.TargetTargetFailed, corev1.ConditionTrue, "UpdateFailed", err.Error(), t)
+		target.SetConditionReason(tgtdv1alpha1.TargetTargetFailed, corev1.ConditionTrue, "UpdateFailed", err.Error(), t)
 		r.updateStatus(log, target, t)
 		return ctrl.Result{}, err
 	}
-	setTargetCondition(target, tgtdv1alpha1.TargetTargetFailed, corev1.ConditionFalse, t)
+	target.SetCondition(tgtdv1alpha1.TargetTargetFailed, corev1.ConditionFalse, t)
 
 	actual, err := r.getActualState(target)
 	if err != nil {
@@ -95,11 +95,11 @@ func (r *TargetReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	if err := r.reconcileLUNs(log, target, actual); err != nil {
-		setTargetConditionReason(target, tgtdv1alpha1.TargetLUNFailed, corev1.ConditionTrue, "UpdateFailed", err.Error(), t)
+		target.SetConditionReason(tgtdv1alpha1.TargetLUNFailed, corev1.ConditionTrue, "UpdateFailed", err.Error(), t)
 		r.updateStatus(log, target, t)
 		return ctrl.Result{}, err
 	}
-	setTargetCondition(target, tgtdv1alpha1.TargetLUNFailed, corev1.ConditionFalse, t)
+	target.SetCondition(tgtdv1alpha1.TargetLUNFailed, corev1.ConditionFalse, t)
 
 	if err := r.updateStatus(log, target, t); err != nil {
 		return ctrl.Result{}, err
@@ -246,9 +246,8 @@ func (r *TargetReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // updateStatus updates target.Status.
 func (r *TargetReconciler) updateStatus(log logr.Logger, target *tgtdv1alpha1.Target, t metav1.Time) error {
-	conditions := target.Status.Conditions
-	targetFailed := getTargetCondition(conditions, tgtdv1alpha1.TargetTargetFailed)
-	lunsFailed := getTargetCondition(conditions, tgtdv1alpha1.TargetLUNFailed)
+	targetFailed := target.GetCondition(tgtdv1alpha1.TargetTargetFailed)
+	lunsFailed := target.GetCondition(tgtdv1alpha1.TargetLUNFailed)
 
 	ready := (targetFailed == nil || targetFailed.Status == corev1.ConditionFalse) &&
 		(lunsFailed == nil || lunsFailed.Status == corev1.ConditionFalse)
@@ -257,7 +256,7 @@ func (r *TargetReconciler) updateStatus(log logr.Logger, target *tgtdv1alpha1.Ta
 		status = corev1.ConditionTrue
 	}
 
-	setTargetCondition(target, tgtdv1alpha1.TargetConditionReady, status, t)
+	target.SetCondition(tgtdv1alpha1.TargetConditionReady, status, t)
 
 	target.Status.ObservedGeneration = target.Generation
 	observedTarget, err := r.getActualState(target)
@@ -272,40 +271,5 @@ func (r *TargetReconciler) updateStatus(log logr.Logger, target *tgtdv1alpha1.Ta
 		return err
 	}
 
-	return nil
-}
-
-// setTargetCondition sets condition of type condType with empty reason and message.
-func setTargetCondition(target *tgtdv1alpha1.Target, condType tgtdv1alpha1.TargetConditionType, status corev1.ConditionStatus, t metav1.Time) {
-	setTargetConditionReason(target, condType, status, "", "", t)
-}
-
-// setTargetConditionReason is similar to setCondition, but it takes reason and message.
-func setTargetConditionReason(target *tgtdv1alpha1.Target, condType tgtdv1alpha1.TargetConditionType, status corev1.ConditionStatus, reason, msg string, t metav1.Time) {
-	cond := getTargetCondition(target.Status.Conditions, condType)
-	if cond == nil {
-		target.Status.Conditions = append(target.Status.Conditions, tgtdv1alpha1.TargetCondition{
-			Type: condType,
-		})
-		cond = &target.Status.Conditions[len(target.Status.Conditions)-1]
-	}
-
-	if cond.Status != status {
-		cond.Status = status
-		cond.LastTransitionTime = t
-	}
-
-	cond.Reason = reason
-	cond.Message = msg
-}
-
-// getTargetCondition returns condition of type condType if it exists.  Otherwise returns nil.
-func getTargetCondition(conditions []tgtdv1alpha1.TargetCondition, condType tgtdv1alpha1.TargetConditionType) *tgtdv1alpha1.TargetCondition {
-	for i := range conditions {
-		cond := &conditions[i]
-		if cond.Type == condType {
-			return cond
-		}
-	}
 	return nil
 }

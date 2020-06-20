@@ -24,6 +24,7 @@ import (
 // TargetSpec defines the desired state of Target
 type TargetSpec struct {
 	// TargetNodeName is a node name where the target will be placed.
+	// +kubebuilder:validation:Required
 	TargetNodeName string `json:"targetNodeName,omitempty"`
 
 	// IQN is an iqn of the target
@@ -120,6 +121,51 @@ type Target struct {
 
 	Spec   TargetSpec   `json:"spec,omitempty"`
 	Status TargetStatus `json:"status,omitempty"`
+}
+
+// SetCondition sets condition of type condType with empty reason and message.
+func (target *Target) SetCondition(condType TargetConditionType, status corev1.ConditionStatus, t metav1.Time) {
+	target.SetConditionReason(condType, status, "", "", t)
+}
+
+// SetConditionReason is similar to setCondition, but it takes reason and message.
+func (target *Target) SetConditionReason(condType TargetConditionType, status corev1.ConditionStatus, reason, msg string, t metav1.Time) {
+	cond := target.GetCondition(condType)
+	if cond == nil {
+		target.Status.Conditions = append(target.Status.Conditions, TargetCondition{
+			Type: condType,
+		})
+		cond = &target.Status.Conditions[len(target.Status.Conditions)-1]
+	}
+
+	if cond.Status != status {
+		cond.Status = status
+		cond.LastTransitionTime = t
+	}
+
+	cond.Reason = reason
+	cond.Message = msg
+}
+
+// GetCondition returns condition of type condType if it exists.  Otherwise returns nil.
+func (target *Target) GetCondition(condType TargetConditionType) *TargetCondition {
+	for i := range target.Status.Conditions {
+		cond := &target.Status.Conditions[i]
+		if cond.Type == condType {
+			return cond
+		}
+	}
+	return nil
+}
+
+func (target *Target) Ready() bool {
+	r := target.GetCondition(TargetConditionReady)
+	if r != nil {
+		if r.Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+	return false
 }
 
 // +kubebuilder:object:root=true

@@ -20,10 +20,12 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/longhorn/go-iscsi-helper/iscsi"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
@@ -31,6 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	tgtdv1alpha1 "github.com/yuanying/tgtd-operator/api/v1alpha1"
+	"github.com/yuanying/tgtd-operator/utils/tgtadm"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -38,8 +41,10 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var cfg *rest.Config
+var k8sManager ctrl.Manager
 var k8sClient client.Client
 var testEnv *envtest.Environment
+var testNodeName = "testnode"
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -67,9 +72,33 @@ var _ = BeforeSuite(func(done Done) {
 
 	// +kubebuilder:scaffold:scheme
 
+	k8sManager, err = ctrl.NewManager(cfg, ctrl.Options{
+		Scheme: scheme.Scheme,
+	})
+	Expect(err).ToNot(HaveOccurred())
+
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sClient).ToNot(BeNil())
+
+	By("Starting tgt daemon")
+	err = iscsi.StartDaemon(true)
+	Expect(err).ToNot(HaveOccurred())
+
+	err = (&TargetReconciler{
+		Client:   k8sManager.GetClient(),
+		Log:      ctrl.Log.WithName("controllers").WithName("Target"),
+		Scheme:   k8sManager.GetScheme(),
+		Recorder: k8sManager.GetEventRecorderFor("target-controller"),
+		TgtAdm:   &tgtadm.TgtAdmLonghornHelper{},
+		NodeName: testNodeName,
+	}).SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
+	go func() {
+		err = k8sManager.Start(ctrl.SetupSignalHandler())
+		Expect(err).ToNot(HaveOccurred())
+	}()
 
 	close(done)
 }, 60)
@@ -78,4 +107,10 @@ var _ = AfterSuite(func() {
 	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).ToNot(HaveOccurred())
+
+	By("stopping tgt daemon")
+	// iscsi.ShutdownTgtd always failed
+	// TODO: investigating
+	// err = iscsi.ShutdownTgtd()
+	// Expect(err).ToNot(HaveOccurred())
 })

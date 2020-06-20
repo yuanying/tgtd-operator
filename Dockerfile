@@ -24,6 +24,7 @@ RUN go mod download
 
 # Copy the go source
 COPY main.go main.go
+COPY config/ config/
 COPY api/ api/
 COPY controllers/ controllers/
 COPY utils/ utils/
@@ -43,7 +44,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o tgtd-ope
 FROM ubuntu:20.04 as bin
 USER root
 
-RUN apt-get update && apt-get install tgt -y
+RUN apt-get update && apt-get install tgt curl -y
 
 WORKDIR /
 COPY --from=builder /workspace/tgtd-operator .
