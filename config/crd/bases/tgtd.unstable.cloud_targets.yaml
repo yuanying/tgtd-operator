@@ -55,8 +55,8 @@ spec:
                     bsType:
                       description: BSType is a backing store type
                       type: string
-                    lid:
-                      description: LID is an id of the LUN
+                    lun:
+                      description: LUN is an id of the LUN
                       format: int32
                       type: integer
                   required:
@@ -133,8 +133,8 @@ spec:
                         bsType:
                           description: BSType is a backing store type
                           type: string
-                        lid:
-                          description: LID is an id of the LUN
+                        lun:
+                          description: LUN is an id of the LUN
                           format: int32
                           type: integer
                       required:
