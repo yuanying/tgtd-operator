@@ -147,7 +147,7 @@ func parseShowTarget(raw string) (targets []tgtdv1alpha1.TargetActual, err error
 				if err != nil {
 					return nil, err
 				}
-				currentLUN.LID = int32(lid)
+				currentLUN.LUN = int32(lid)
 				target := currentTarget(targets)
 				target.LUNs = append(target.LUNs, currentLUN)
 			} else if strings.HasPrefix(line, "Backing store path:") {

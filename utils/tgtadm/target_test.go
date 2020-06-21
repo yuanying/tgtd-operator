@@ -160,19 +160,19 @@ func TestParseTargetsOutput(t *testing.T) {
 			IQN: "iqn.2020-04.cloud.unstable:target1",
 			LUNs: []tgtdv1alpha1.TargetLUN{
 				{
-					LID:          0,
+					LUN:          0,
 					BackingStore: "None",
 				},
 				{
-					LID:          1,
+					LUN:          1,
 					BackingStore: "/dev/zvol/tank/vol",
 				},
 				{
-					LID:          3,
+					LUN:          3,
 					BackingStore: "/dev/zvol/tank/vol2",
 				},
 				{
-					LID:          13,
+					LUN:          13,
 					BackingStore: "/dev/zvol/tank/vol3",
 				},
 			},
@@ -184,11 +184,11 @@ func TestParseTargetsOutput(t *testing.T) {
 			IQN: "iqn.2020-04.cloud.unstable:target3",
 			LUNs: []tgtdv1alpha1.TargetLUN{
 				{
-					LID:          0,
+					LUN:          0,
 					BackingStore: "None",
 				},
 				{
-					LID:          1,
+					LUN:          1,
 					BackingStore: "/dev/zvol/tank/vol",
 				},
 			},
@@ -200,7 +200,7 @@ func TestParseTargetsOutput(t *testing.T) {
 			IQN: "iqn.2020-04.cloud.unstable:target4",
 			LUNs: []tgtdv1alpha1.TargetLUN{
 				{
-					LID:          0,
+					LUN:          0,
 					BackingStore: "None",
 				},
 			},

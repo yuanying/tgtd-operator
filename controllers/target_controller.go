@@ -171,7 +171,7 @@ func (r *TargetReconciler) getActualState(target *tgtdv1alpha1.Target) (*tgtdv1a
 func (r *TargetReconciler) getLUN(lun int32, luns []tgtdv1alpha1.TargetLUN) *tgtdv1alpha1.TargetLUN {
 	for i := range luns {
 		l := &luns[i]
-		if l.LID == lun {
+		if l.LUN == lun {
 			return l
 		}
 	}
@@ -181,11 +181,11 @@ func (r *TargetReconciler) getLUN(lun int32, luns []tgtdv1alpha1.TargetLUN) *tgt
 func (r *TargetReconciler) reconcileLUNs(log logr.Logger, target *tgtdv1alpha1.Target, actual *tgtdv1alpha1.TargetActual) error {
 	for i := range target.Spec.LUNs {
 		l := &target.Spec.LUNs[i]
-		al := r.getLUN(l.LID, actual.LUNs)
+		al := r.getLUN(l.LUN, actual.LUNs)
 		if al != nil {
 			if al.BackingStore != l.BackingStore {
 				log.V(1).Info("BackingStore is missmatch",
-					"LUN", l.LID,
+					"LUN", l.LUN,
 					"DesiredBackingStore", l.BackingStore,
 					"ObservedBackingStore", al.BackingStore,
 				)
@@ -196,11 +196,11 @@ func (r *TargetReconciler) reconcileLUNs(log logr.Logger, target *tgtdv1alpha1.T
 				if l.BSOpts != nil {
 					bsopts = *l.BSOpts
 				}
-				if err := r.TgtAdm.AddLun(int(actual.TID), int(l.LID), l.BackingStore, *l.BSType, bsopts); err != nil {
+				if err := r.TgtAdm.AddLun(int(actual.TID), int(l.LUN), l.BackingStore, *l.BSType, bsopts); err != nil {
 					return err
 				}
 			} else {
-				if err := r.TgtAdm.AddLunBackedByFile(int(actual.TID), int(l.LID), l.BackingStore); err != nil {
+				if err := r.TgtAdm.AddLunBackedByFile(int(actual.TID), int(l.LUN), l.BackingStore); err != nil {
 					return err
 				}
 			}
@@ -213,14 +213,14 @@ func (r *TargetReconciler) reconcileLUNs(log logr.Logger, target *tgtdv1alpha1.T
 func (r *TargetReconciler) deleteStaledLUNs(log logr.Logger, target *tgtdv1alpha1.Target, actual *tgtdv1alpha1.TargetActual) error {
 	for i := range actual.LUNs {
 		al := &actual.LUNs[i]
-		if al.LID == 0 {
+		if al.LUN == 0 {
 			log.V(4).Info("LID 0 should be ignored")
 			continue
 		}
-		l := r.getLUN(al.LID, target.Spec.LUNs)
+		l := r.getLUN(al.LUN, target.Spec.LUNs)
 		if l == nil {
-			if err := r.TgtAdm.DeleteLun(int(actual.TID), int(al.LID)); err != nil {
-				log.Error(err, "Failed to delete LUN: %v, Path: %v", al.LID, al.BackingStore)
+			if err := r.TgtAdm.DeleteLun(int(actual.TID), int(al.LUN)); err != nil {
+				log.Error(err, "Failed to delete LUN: %v, Path: %v", al.LUN, al.BackingStore)
 				return err
 			}
 		}
