@@ -58,6 +58,11 @@ const (
 type InitiatorGroupStatus struct {
 }
 
+type InitiatorGroupReference struct {
+	// Name is unique to reference a initiator group resource.
+	Name string `json:"name,omitempty"`
+}
+
 // +kubebuilder:object:root=true
 
 // InitiatorGroup is the Schema for the initiatorgroups API

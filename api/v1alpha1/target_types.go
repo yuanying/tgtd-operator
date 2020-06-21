@@ -106,6 +106,11 @@ type TargetCondition struct {
 	Message string `json:"message,omitempty"`
 }
 
+type TargetReference struct {
+	// Name is unique to reference a target resource.
+	Name string `json:"name,omitempty"`
+}
+
 // +kubebuilder:object:root=true
 
 // Target is the Schema for the targets API

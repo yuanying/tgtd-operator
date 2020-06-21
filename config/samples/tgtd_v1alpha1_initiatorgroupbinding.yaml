@@ -1,0 +1,7 @@
+apiVersion: tgtd.unstable.cloud/v1alpha1
+kind: InitiatorGroupBinding
+metadata:
+  name: initiatorgroupbinding-sample
+spec:
+  # Add fields here
+  foo: bar

@@ -86,6 +86,17 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Target")
 		os.Exit(1)
 	}
+	if err = (&controllers.InitiatorGroupBindingReconciler{
+		Client:   mgr.GetClient(),
+		Log:      ctrl.Log.WithName("controllers").WithName("InitiatorGroupBinding"),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("initiator-group-binding-controller"),
+		TgtAdm:   &tgtadm.TgtAdmLonghornHelper{},
+		NodeName: nodeName,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "InitiatorGroupBinding")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")
