@@ -61,6 +61,8 @@ type InitiatorGroupStatus struct {
 // +kubebuilder:object:root=true
 
 // InitiatorGroup is the Schema for the initiatorgroups API
+// +kubebuilder:resource:shortName=ig,scope=Cluster
+// +kubebuilder:subresource:status
 type InitiatorGroup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
