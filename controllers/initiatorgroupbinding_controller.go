@@ -20,7 +20,6 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -84,28 +83,7 @@ func (r *InitiatorGroupBindingReconciler) SetupWithManager(mgr ctrl.Manager) err
 			&source.Kind{Type: &tgtdv1alpha1.InitiatorGroup{}},
 			enqueueRequestsIGForTarget(mgr.GetClient()),
 		).
-		Watches(
-			&source.Kind{Type: &corev1.Node{}},
-			enqueueRequestsNodeForTarget(mgr.GetClient()),
-		).
 		Complete(r)
-}
-
-func enqueueRequestsNodeForTarget(c client.Client) *handler.EnqueueRequestsFromMapFunc {
-	return &handler.EnqueueRequestsFromMapFunc{
-		ToRequests: handler.ToRequestsFunc(func(a handler.MapObject) []reconcile.Request {
-			targets := &tgtdv1alpha1.TargetList{}
-			if err := c.List(context.Background(), targets); err != nil {
-				return nil
-			}
-			reqs := make([]reconcile.Request, len(targets.Items))
-			for i := range reqs {
-				name := targets.Items[i].GetName()
-				reqs[i].NamespacedName = types.NamespacedName{Name: name}
-			}
-			return reqs
-		}),
-	}
 }
 
 func enqueueRequestsIGBForTarget(c client.Client) *handler.EnqueueRequestsFromMapFunc {
