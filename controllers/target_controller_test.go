@@ -41,9 +41,6 @@ var _ = Describe("TargetController", func() {
 		testImage     = "test.img"
 		imageSize     = 4 * 1024 * 1024 // 4M
 		testTargetIQN = "iqn-2020-06.cloud.unstable:target1"
-
-		timeout  = time.Second * 30
-		interval = time.Second * 1
 	)
 
 	var (
