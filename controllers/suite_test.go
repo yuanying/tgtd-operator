@@ -19,6 +19,7 @@ package controllers
 import (
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/longhorn/go-iscsi-helper/iscsi"
 	. "github.com/onsi/ginkgo"
@@ -45,6 +46,11 @@ var k8sManager ctrl.Manager
 var k8sClient client.Client
 var testEnv *envtest.Environment
 var testNodeName = "testnode"
+
+const (
+	timeout  = time.Second * 30
+	interval = time.Second * 1
+)
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
