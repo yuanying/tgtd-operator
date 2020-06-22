@@ -27,14 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	tgtdv1alpha1 "github.com/yuanying/tgtd-operator/api/v1alpha1"
-	ptr_util "github.com/yuanying/tgtd-operator/utils/ptr"
 	"github.com/yuanying/tgtd-operator/utils/tgtadm"
-)
-
-const (
-	testInitiatorNamePrefix    = "iqn.2020-06.cloud.unstable.test"
-	testInitiatorAnnotationKey = "initiator-iqn"
-	testNodeLabel              = "node-group"
 )
 
 var _ = Describe("InitiatorGroupBindingController", func() {
@@ -96,31 +89,3 @@ var _ = Describe("InitiatorGroupBindingController", func() {
 		})
 	})
 })
-
-func newInitiatorGroup(name string) *tgtdv1alpha1.InitiatorGroup {
-	return &tgtdv1alpha1.InitiatorGroup{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-	}
-}
-
-func newInitiatorGroupWithAddress(name string, addresses []string) *tgtdv1alpha1.InitiatorGroup {
-	ig := newInitiatorGroup(name)
-	ig.Spec.Addresses = addresses
-	return ig
-}
-
-func newInitiatorGroupWithNodeName(name string) *tgtdv1alpha1.InitiatorGroup {
-	ig := newInitiatorGroup(name)
-	ig.Spec.InitiatorNameStrategy.Type = tgtdv1alpha1.NodeNameInitiatorNameStrategy
-	ig.Spec.InitiatorNameStrategy.InitiatorNamePrefix = ptr_util.StringPtr(testInitiatorNamePrefix)
-	return ig
-}
-
-func newInitiatorGroupWithAnnotationKey(name string) *tgtdv1alpha1.InitiatorGroup {
-	ig := newInitiatorGroup(name)
-	ig.Spec.InitiatorNameStrategy.Type = tgtdv1alpha1.AnnotationInitiatorNameStrategy
-	ig.Spec.InitiatorNameStrategy.AnnotationKey = ptr_util.StringPtr(testInitiatorAnnotationKey)
-	return ig
-}
