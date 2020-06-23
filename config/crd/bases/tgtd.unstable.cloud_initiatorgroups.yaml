@@ -148,6 +148,17 @@ spec:
             type: object
           status:
             description: InitiatorGroupStatus defines the observed state of InitiatorGroup
+            properties:
+              addresses:
+                description: Addresses are addresses of initiators
+                items:
+                  type: string
+                type: array
+              initiators:
+                description: Initiators are names of initiators
+                items:
+                  type: string
+                type: array
             type: object
         type: object
     served: true
