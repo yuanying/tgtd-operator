@@ -56,6 +56,11 @@ const (
 
 // InitiatorGroupStatus defines the observed state of InitiatorGroup
 type InitiatorGroupStatus struct {
+	// Addresses are addresses of initiators
+	Addresses []string `json:"addresses,omitempty"`
+
+	// Initiators are names of initiators
+	Initiators []string `json:"initiators,omitempty"`
 }
 
 type InitiatorGroupReference struct {
