@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -26,8 +25,8 @@ type InitiatorGroupSpec struct {
 	// Addresses are used for initiator address
 	Addresses []string `json:"addresses,omitempty"`
 
-	// NodeSelector is a selector to select initiators
-	NodeSelector *corev1.NodeSelector `json:"nodeSelector,omitempty"`
+	// NodeSelector is a selector to select initiator nodes
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 
 	// InitiatorNameStrategy is a strategy how to decide initiator name from node object
 	InitiatorNameStrategy InitiatorGroupInitiatorNameStrategy `json:"initiatorNameStrategy,omitempty"`

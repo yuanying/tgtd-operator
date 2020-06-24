@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -33,6 +34,7 @@ import (
 const (
 	testInitiatorNamePrefix = "iqn.2020-06.cloud.unstable.test"
 	testNodeLabel           = "node-group"
+	testNodeLavelValue      = "group1"
 )
 
 var _ = Describe("InitiatorGroupController", func() {
@@ -40,7 +42,11 @@ var _ = Describe("InitiatorGroupController", func() {
 	var (
 		initialNodes = []corev1.Node{
 			*newNode("node1"),
-			*newNodeWithLabel("node2", testNodeLabel, "group1"),
+			*newNodeWithLabel("node2", testNodeLabel, testNodeLavelValue),
+		}
+		additionalNodes = []corev1.Node{
+			*newNode("node3"),
+			*newNodeWithLabel("node4", testNodeLabel, testNodeLavelValue),
 		}
 	)
 
@@ -104,14 +110,80 @@ var _ = Describe("InitiatorGroupController", func() {
 		When("it doesn't have nodeSelector", func() {
 
 			It("should register all nodes as initiator", func() {
+				var err error
+				ctx := context.Background()
+				key := types.NamespacedName{Name: "ig1"}
 
+				By("Creating the InitiatorGroup")
+
+				ig := newInitiatorGroupWithNodeName(key.Name)
+				err = k8sClient.Create(ctx, ig)
+				Expect(err).ToNot(HaveOccurred())
+
+				By("Checking created InitiatorGroup")
+				fetched := &tgtdv1alpha1.InitiatorGroup{}
+				expected := []string{
+					fmt.Sprintf("%s:node1", testInitiatorNamePrefix),
+					fmt.Sprintf("%s:node2", testInitiatorNamePrefix),
+				}
+				Eventually(func() []string {
+					k8sClient.Get(context.Background(), key, fetched)
+					return fetched.Status.Initiators
+				}, timeout, interval).Should(Equal(expected))
+
+				By("Adding additional nodes")
+				createNodes(additionalNodes)
+
+				By("Checking created InitiatorGroup")
+				expected = []string{
+					fmt.Sprintf("%s:node1", testInitiatorNamePrefix),
+					fmt.Sprintf("%s:node2", testInitiatorNamePrefix),
+					fmt.Sprintf("%s:node3", testInitiatorNamePrefix),
+					fmt.Sprintf("%s:node4", testInitiatorNamePrefix),
+				}
+				Eventually(func() []string {
+					k8sClient.Get(context.Background(), key, fetched)
+					return fetched.Status.Initiators
+				}, timeout, interval).Should(Equal(expected))
 			})
 		})
 
 		When("it has nodeSelector", func() {
 
 			It("should register only labeled nodes as initiator", func() {
+				var err error
+				ctx := context.Background()
+				key := types.NamespacedName{Name: "ig2"}
 
+				By("Creating the InitiatorGroup")
+
+				ig := newInitiatorGroupWithNodeName(key.Name)
+				ig.Spec.NodeSelector = map[string]string{testNodeLabel: testNodeLavelValue}
+				err = k8sClient.Create(ctx, ig)
+				Expect(err).ToNot(HaveOccurred())
+
+				By("Checking created InitiatorGroup")
+				fetched := &tgtdv1alpha1.InitiatorGroup{}
+				expected := []string{
+					fmt.Sprintf("%s:node2", testInitiatorNamePrefix),
+				}
+				Eventually(func() []string {
+					k8sClient.Get(context.Background(), key, fetched)
+					return fetched.Status.Initiators
+				}, timeout, interval).Should(Equal(expected))
+
+				By("Adding additional nodes")
+				createNodes(additionalNodes)
+
+				By("Checking created InitiatorGroup")
+				expected = []string{
+					fmt.Sprintf("%s:node2", testInitiatorNamePrefix),
+					fmt.Sprintf("%s:node4", testInitiatorNamePrefix),
+				}
+				Eventually(func() []string {
+					k8sClient.Get(context.Background(), key, fetched)
+					return fetched.Status.Initiators
+				}, timeout, interval).Should(Equal(expected))
 			})
 		})
 	})
@@ -168,7 +240,7 @@ func newInitiatorGroupWithAddress(name string, addresses []string) *tgtdv1alpha1
 	return ig
 }
 
-func newInitiatorGroupSelectorWithNodeName(name string) *tgtdv1alpha1.InitiatorGroup {
+func newInitiatorGroupWithNodeName(name string) *tgtdv1alpha1.InitiatorGroup {
 	ig := newInitiatorGroup(name)
 	ig.Spec.InitiatorNameStrategy.Type = tgtdv1alpha1.NodeNameInitiatorNameStrategy
 	ig.Spec.InitiatorNameStrategy.InitiatorNamePrefix = ptr_util.StringPtr(testInitiatorNamePrefix)
