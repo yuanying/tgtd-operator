@@ -32,6 +32,7 @@ type TgtAdm interface {
 	FindNextAvailableTargetID() (int, error)
 
 	GetTargets() ([]tgtdv1alpha1.TargetActual, error)
+	GetTarget(iqn string) (*tgtdv1alpha1.TargetActual, error)
 }
 
 type TgtAdmLonghornHelper struct{}
@@ -92,6 +93,20 @@ func (t *TgtAdmLonghornHelper) GetTargets() (targets []tgtdv1alpha1.TargetActual
 		return nil, err
 	}
 	return parseShowTarget(output)
+}
+
+func (t *TgtAdmLonghornHelper) GetTarget(iqn string) (*tgtdv1alpha1.TargetActual, error) {
+	if targets, err := t.GetTargets(); err != nil {
+		return nil, err
+	} else {
+		for i := range targets {
+			t := &targets[i]
+			if t.IQN == iqn {
+				return t, nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("Target not found, IQN: %v", iqn)
 }
 
 func parseShowAccount(raw string) ([]string, error) {

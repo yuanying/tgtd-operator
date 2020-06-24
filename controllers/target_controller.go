@@ -89,7 +89,7 @@ func (r *TargetReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 	target.SetCondition(tgtdv1alpha1.TargetTargetFailed, corev1.ConditionFalse, t)
 
-	actual, err := r.getActualState(target)
+	actual, err := r.TgtAdm.GetTarget(target.Spec.IQN)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -151,21 +151,6 @@ func (r *TargetReconciler) createOrUpdateTarget(log logr.Logger, target *tgtdv1a
 		}
 	}
 	return nil
-}
-
-func (r *TargetReconciler) getActualState(target *tgtdv1alpha1.Target) (*tgtdv1alpha1.TargetActual, error) {
-	iqn := target.Spec.IQN
-	if targets, err := r.TgtAdm.GetTargets(); err != nil {
-		return nil, err
-	} else {
-		for i := range targets {
-			t := &targets[i]
-			if t.IQN == iqn {
-				return t, nil
-			}
-		}
-	}
-	return nil, fmt.Errorf("Target not found, IQN: %v", iqn)
 }
 
 func (r *TargetReconciler) getLUN(lun int32, luns []tgtdv1alpha1.TargetLUN) *tgtdv1alpha1.TargetLUN {
