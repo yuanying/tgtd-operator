@@ -21,7 +21,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -225,8 +224,10 @@ func (in *InitiatorGroupSpec) DeepCopyInto(out *InitiatorGroupSpec) {
 	}
 	if in.NodeSelector != nil {
 		in, out := &in.NodeSelector, &out.NodeSelector
-		*out = new(v1.NodeSelector)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	in.InitiatorNameStrategy.DeepCopyInto(&out.InitiatorNameStrategy)
 }

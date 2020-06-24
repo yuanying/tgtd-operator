@@ -18,6 +18,8 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"sort"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -37,9 +39,10 @@ import (
 // InitiatorGroupReconciler reconciles a InitiatorGroupBinding object
 type InitiatorGroupReconciler struct {
 	client.Client
-	Log      logr.Logger
-	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	Log                 logr.Logger
+	Scheme              *runtime.Scheme
+	Recorder            record.EventRecorder
+	InitiatorNamePrefix string
 }
 
 // +kubebuilder:rbac:groups=tgtd.unstable.cloud,resources=initiatorgroupbindings,verbs=get;list;watch;create;update;patch;delete
@@ -64,9 +67,93 @@ func (r *InitiatorGroupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		return ctrl.Result{}, nil
 	}
 
-	// t := metav1.Now()
+	inis, err := r.fetchInitiators(log, ig)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
-	return ctrl.Result{}, r.updateStatus(log, ig, nil)
+	return ctrl.Result{}, r.updateStatus(log, ig, inis)
+}
+
+func (r *InitiatorGroupReconciler) fetchInitiators(log logr.Logger, ig *tgtdv1alpha1.InitiatorGroup) ([]string, error) {
+	nodes, err := r.fetchNodes(log, ig.Spec.NodeSelector)
+	if err != nil {
+		return nil, err
+	}
+	inits := make([]string, 0, len(nodes.Items))
+
+	fn := r.genInitiatorNameFunc(log, ig)
+	for i := range nodes.Items {
+		n := &nodes.Items[i]
+		name := fn(n)
+		if name != nil {
+			inits = append(inits, *name)
+		}
+	}
+	sort.Strings(inits)
+	return inits, nil
+}
+
+func (r *InitiatorGroupReconciler) genInitiatorNameFunc(log logr.Logger, ig *tgtdv1alpha1.InitiatorGroup) func(*corev1.Node) *string {
+	var f func(*corev1.Node) *string
+	if ig.Spec.InitiatorNameStrategy.Type == tgtdv1alpha1.AnnotationInitiatorNameStrategy {
+		f = func(node *corev1.Node) *string {
+			key := ig.Spec.InitiatorNameStrategy.AnnotationKey
+			if key == nil {
+				msg := "Annotation key (.Spec.InitiatorNameStrategy.AnnotationKey) must be specified"
+				err := fmt.Errorf(msg)
+				log.Error(err, msg)
+				r.Recorder.Event(ig, corev1.EventTypeWarning, "AnnotationKeyMissing", msg)
+				return nil
+			}
+			ans := node.Annotations
+			if ans != nil {
+				if v, ok := ans[*key]; ok {
+					return &v
+				}
+			}
+			return nil
+		}
+	} else {
+		f = func(node *corev1.Node) *string {
+			var prefix string
+			if ig.Spec.InitiatorNameStrategy.InitiatorNamePrefix != nil {
+				prefix = *ig.Spec.InitiatorNameStrategy.InitiatorNamePrefix
+			} else {
+				prefix = r.InitiatorNamePrefix
+			}
+			name := fmt.Sprintf("%s:%s", prefix, node.Name)
+			return &name
+		}
+	}
+	return f
+}
+
+func (r *InitiatorGroupReconciler) fetchNodes(log logr.Logger, selector map[string]string) (*corev1.NodeList, error) {
+	ctx := context.Background()
+	opts, err := r.newListOptions(selector)
+	if err != nil {
+		return nil, err
+	}
+	nodes := &corev1.NodeList{}
+	if err := r.List(ctx, nodes, opts...); err != nil {
+		log.Error(err, "Failed to list nodes")
+		return nil, err
+	}
+	return nodes, nil
+}
+
+func (r *InitiatorGroupReconciler) newListOptions(selector map[string]string) ([]client.ListOption, error) {
+	opts := make([]client.ListOption, 0)
+	if selector == nil {
+		return opts, nil
+	}
+	opt := client.MatchingLabels{}
+	for k, v := range selector {
+		opt[k] = v
+	}
+	opts = append(opts, opt)
+	return opts, nil
 }
 
 func (r *InitiatorGroupReconciler) updateStatus(log logr.Logger, igs *tgtdv1alpha1.InitiatorGroup, initiators []string) error {

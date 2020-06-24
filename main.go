@@ -49,8 +49,10 @@ func main() {
 	var nodeName string
 	var metricsAddr string
 	var enableLeaderElection bool
+	var initiatorNamePrefix string
 	flag.StringVar(&nodeName, "node-name", "", "Node name to operate tgtd.")
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
+	flag.StringVar(&initiatorNamePrefix, "initiator-name-prefix", "iqn.2020-06.cloud.unstable.tgtd", "Initiator name prefix to generate initiator name.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -84,6 +86,16 @@ func main() {
 		NodeName: nodeName,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Target")
+		os.Exit(1)
+	}
+	if err = (&controllers.InitiatorGroupReconciler{
+		Client:              mgr.GetClient(),
+		Log:                 ctrl.Log.WithName("controllers").WithName("InitiatorGroup"),
+		Scheme:              mgr.GetScheme(),
+		Recorder:            mgr.GetEventRecorderFor("initiator-group-binding-controller"),
+		InitiatorNamePrefix: initiatorNamePrefix,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "InitiatorGroupBinding")
 		os.Exit(1)
 	}
 	if err = (&controllers.InitiatorGroupBindingReconciler{
