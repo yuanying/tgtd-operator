@@ -45,6 +45,8 @@ spec:
                   name:
                     description: Name is unique to reference a initiator group resource.
                     type: string
+                required:
+                - name
                 type: object
               targetRef:
                 description: TargetRef is a reference to target resource
@@ -52,6 +54,8 @@ spec:
                   name:
                     description: Name is unique to reference a target resource.
                     type: string
+                required:
+                - name
                 type: object
             required:
             - initiatorGroupRef
