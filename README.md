@@ -10,7 +10,7 @@ tgtd-operator will communicate with tgt daemon using tgtadm cli, so tgtd-operato
 
 ### Target
 
-Target is a represent of iSCSI Target which consits of LUNs.
+Target is a representation of iSCSI Target which consits of LUNs.
 
 ```yaml
 apiVersion: tgtd.unstable.cloud/v1alpha1
