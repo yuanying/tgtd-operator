@@ -64,6 +64,7 @@ type InitiatorGroupStatus struct {
 
 type InitiatorGroupReference struct {
 	// Name is unique to reference a initiator group resource.
+	// +kubebuilder:validation:Required
 	Name string `json:"name,omitempty"`
 }
 

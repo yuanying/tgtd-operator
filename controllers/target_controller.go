@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -88,9 +89,13 @@ func (r *TargetReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 	target.SetCondition(tgtdv1alpha1.TargetTargetFailed, corev1.ConditionFalse, t)
 
-	actual, err := r.TgtAdm.GetTarget(target.Spec.IQN)
+	iqn := target.Spec.IQN
+	actual, err := r.TgtAdm.GetTarget(iqn)
 	if err != nil {
 		return ctrl.Result{}, err
+	}
+	if actual == nil {
+		return ctrl.Result{}, fmt.Errorf("Target not found, IQN: %v", iqn)
 	}
 
 	if err := r.reconcileLUNs(log, target, actual); err != nil {

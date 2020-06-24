@@ -24,6 +24,8 @@ type TgtAdm interface {
 	AddLunBackedByFile(tid int, lun int, backingFile string) error
 	AddLun(tid int, lun int, backingFile string, bstype string, bsopts string) error
 	DeleteLun(tid int, lun int) error
+	BindInitiatorByAddress(tid int, initiator string) error
+	UnbindInitiatorByAddress(tid int, initiator string) error
 	BindInitiator(tid int, initiator string) error
 	UnbindInitiator(tid int, initiator string) error
 	GetTargetTid(name string) (int, error)
@@ -52,12 +54,47 @@ func (t *TgtAdmLonghornHelper) AddLun(tid int, lun int, backingFile string, bsty
 func (t *TgtAdmLonghornHelper) DeleteLun(tid int, lun int) error {
 	return iscsi.DeleteLun(tid, lun)
 }
-func (t *TgtAdmLonghornHelper) BindInitiator(tid int, initiator string) error {
+func (t *TgtAdmLonghornHelper) BindInitiatorByAddress(tid int, initiator string) error {
 	return iscsi.BindInitiator(tid, initiator)
 }
-func (t *TgtAdmLonghornHelper) UnbindInitiator(tid int, initiator string) error {
+func (t *TgtAdmLonghornHelper) UnbindInitiatorByAddress(tid int, initiator string) error {
 	return iscsi.UnbindInitiator(tid, initiator)
 }
+
+// BindInitiator will add permission to allow certain initiator(s) to connect to
+// certain target.
+func (t *TgtAdmLonghornHelper) BindInitiator(tid int, initiator string) error {
+	opts := []string{
+		"--lld", "iscsi",
+		"--op", "bind",
+		"--mode", "target",
+		"--tid", strconv.Itoa(tid),
+		"-Q", initiator,
+	}
+	_, err := longhornutil.Execute(tgtBinary, opts)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// UnbindInitiator will remove permission to allow certain initiator(s) to connect to
+// certain target.
+func (t *TgtAdmLonghornHelper) UnbindInitiator(tid int, initiator string) error {
+	opts := []string{
+		"--lld", "iscsi",
+		"--op", "unbind",
+		"--mode", "target",
+		"--tid", strconv.Itoa(tid),
+		"-Q", initiator,
+	}
+	_, err := longhornutil.Execute(tgtBinary, opts)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (t *TgtAdmLonghornHelper) GetTargetTid(name string) (int, error) {
 	return iscsi.GetTargetTid(name)
 }
@@ -106,7 +143,7 @@ func (t *TgtAdmLonghornHelper) GetTarget(iqn string) (*tgtdv1alpha1.TargetActual
 			}
 		}
 	}
-	return nil, fmt.Errorf("Target not found, IQN: %v", iqn)
+	return nil, nil
 }
 
 func parseShowAccount(raw string) ([]string, error) {

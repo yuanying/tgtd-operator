@@ -108,6 +108,7 @@ type TargetCondition struct {
 
 type TargetReference struct {
 	// Name is unique to reference a target resource.
+	// +kubebuilder:validation:Required
 	Name string `json:"name,omitempty"`
 }
 
