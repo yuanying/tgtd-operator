@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -244,7 +243,7 @@ func (r *TargetReconciler) updateStatus(log logr.Logger, target *tgtdv1alpha1.Ta
 	target.SetCondition(tgtdv1alpha1.TargetConditionReady, status, t)
 
 	target.Status.ObservedGeneration = target.Generation
-	observedTarget, err := r.getActualState(target)
+	observedTarget, err := r.TgtAdm.GetTarget(target.Spec.IQN)
 	if err != nil {
 		log.Error(err, "Unable to get actual state of target")
 		return err
