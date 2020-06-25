@@ -23,7 +23,7 @@ COPY go.sum go.sum
 RUN go mod download
 
 # Copy the go source
-COPY main.go main.go
+COPY cmd/ cmd/
 COPY config/ config/
 COPY api/ api/
 COPY controllers/ controllers/
@@ -39,7 +39,7 @@ RUN go test -v ./...
 FROM base as builder
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o tgtd-operator main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o tgtd-operator cmd/tgtd-operator/main.go
 
 FROM ubuntu:20.04 as bin
 USER root
