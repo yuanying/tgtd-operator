@@ -18,11 +18,13 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -33,20 +35,16 @@ import (
 var _ = Describe("InitiatorGroupBindingController", func() {
 
 	var (
-		tgtadm     = tgtadm.TgtAdmLonghornHelper{}
-		igAddress1 = newInitiatorGroupWithAddress("address1", []string{"192.168.1.0/24", "192.168.2.0/24"})
-		igAddress2 = newInitiatorGroupWithAddress("address2", []string{"192.168.3.0/24", "192.168.4.0/24"})
-		igAddress3 = newInitiatorGroupWithAddress("address3", []string{"192.168.1.0/24", "192.168.3.0/24"})
+		tgtadm = tgtadm.TgtAdmLonghornHelper{}
+		ig1Key = types.NamespacedName{Name: "address1"}
+		ig1    *tgtdv1alpha1.InitiatorGroup
 	)
 
 	BeforeEach(func() {
 		var err error
 		ctx := context.Background()
-		err = k8sClient.Create(ctx, igAddress1)
-		Expect(err).ToNot(HaveOccurred())
-		err = k8sClient.Create(ctx, igAddress2)
-		Expect(err).ToNot(HaveOccurred())
-		err = k8sClient.Create(ctx, igAddress3)
+		ig1 = newInitiatorGroupWithAddress(ig1Key.Name, []string{"192.168.1.0/24"})
+		err = k8sClient.Create(ctx, ig1)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
@@ -54,6 +52,12 @@ var _ = Describe("InitiatorGroupBindingController", func() {
 		var err error
 		ctx := context.Background()
 		err = k8sClient.DeleteAllOf(ctx, &tgtdv1alpha1.InitiatorGroup{})
+		Expect(err).ToNot(HaveOccurred())
+		err = k8sClient.DeleteAllOf(ctx, &tgtdv1alpha1.InitiatorGroupBinding{})
+		Expect(err).ToNot(HaveOccurred())
+		err = k8sClient.DeleteAllOf(ctx, &tgtdv1alpha1.Target{})
+		Expect(err).ToNot(HaveOccurred())
+		err = k8sClient.DeleteAllOf(ctx, &corev1.Node{})
 		Expect(err).ToNot(HaveOccurred())
 	})
 
@@ -88,4 +92,82 @@ var _ = Describe("InitiatorGroupBindingController", func() {
 			Expect(afterState).To(Equal(beforeState))
 		})
 	})
+
+	Context("InitiatorGroupBinding with Target", func() {
+		var (
+			testTargetIQN = "iqn-2020-06.cloud.unstable:target1"
+			targetKey     = types.NamespacedName{Name: "target1"}
+
+			initialNodes []corev1.Node
+			target       *tgtdv1alpha1.Target
+		)
+
+		BeforeEach(func() {
+			target = newTarget(targetKey.Name, testTargetIQN)
+			Expect(k8sClient.Create(context.Background(), target)).Should(Succeed())
+			initialNodes = []corev1.Node{
+				*newNode("node1"),
+			}
+			createNodes(initialNodes)
+		})
+
+		AfterEach(func() {
+		})
+
+		It("should bind/unbind initiators to Target", func() {
+			var err error
+			ctx := context.Background()
+			key := types.NamespacedName{Name: "igb1"}
+			toCreate := &tgtdv1alpha1.InitiatorGroupBinding{
+				ObjectMeta: metav1.ObjectMeta{Name: key.Name},
+				Spec: tgtdv1alpha1.InitiatorGroupBindingSpec{
+					TargetRef:         tgtdv1alpha1.TargetReference{Name: targetKey.Name},
+					InitiatorGroupRef: tgtdv1alpha1.InitiatorGroupReference{Name: ig1.Name},
+				},
+			}
+
+			By("Creating InitiatorGroupBinding")
+			Expect(k8sClient.Create(ctx, toCreate)).Should(Succeed())
+
+			By("Checking target ACLs set correctly")
+			Eventually(func() []string {
+				actual, err := tgtadm.GetTarget(testTargetIQN)
+				Expect(err).ToNot(HaveOccurred())
+				if actual == nil {
+					return []string{}
+				}
+				return actual.ACLs
+			}, timeout, interval).Should(Equal([]string{"192.168.1.0/24", fmt.Sprintf("%s:node1", testInitiatorNamePrefix)}))
+
+			By("Update InitiatorGroup")
+			updateIG := &tgtdv1alpha1.InitiatorGroup{}
+			err = k8sClient.Get(ctx, ig1Key, updateIG)
+			Expect(err).ToNot(HaveOccurred())
+			updateIG.Spec.Addresses = []string{"192.168.2.0/24", "192.168.3.0/24"}
+			err = k8sClient.Update(ctx, updateIG)
+			Expect(err).ToNot(HaveOccurred())
+
+			By("Checking target ACLs set correctly")
+			Eventually(func() []string {
+				actual, err := tgtadm.GetTarget(testTargetIQN)
+				Expect(err).ToNot(HaveOccurred())
+				if actual == nil {
+					return []string{}
+				}
+				return actual.ACLs
+			}, timeout, interval).Should(Equal([]string{"192.168.2.0/24", "192.168.3.0/24", fmt.Sprintf("%s:node1", testInitiatorNamePrefix)}))
+		})
+	})
 })
+
+func newTarget(name, iqn string) *tgtdv1alpha1.Target {
+	return &tgtdv1alpha1.Target{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Spec: tgtdv1alpha1.TargetSpec{
+			IQN:      iqn,
+			NodeName: testNodeName,
+		},
+	}
+}
