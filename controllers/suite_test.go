@@ -24,6 +24,7 @@ import (
 	"github.com/longhorn/go-iscsi-helper/iscsi"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"go.uber.org/zap/zapcore"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -61,7 +62,7 @@ func TestAPIs(t *testing.T) {
 }
 
 var _ = BeforeSuite(func(done Done) {
-	logf.SetLogger(zap.LoggerTo(GinkgoWriter, true))
+	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.Level(zapcore.DebugLevel), zap.UseDevMode(true)))
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
@@ -105,18 +106,19 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	err = (&InitiatorGroupReconciler{
-		Client:   k8sManager.GetClient(),
-		Log:      ctrl.Log.WithName("controllers").WithName("Target"),
-		Scheme:   k8sManager.GetScheme(),
-		Recorder: k8sManager.GetEventRecorderFor("target-controller"),
+		Client:              k8sManager.GetClient(),
+		Log:                 ctrl.Log.WithName("controllers").WithName("InitiatorGroup"),
+		Scheme:              k8sManager.GetScheme(),
+		Recorder:            k8sManager.GetEventRecorderFor("initiatorgroup-controller"),
+		InitiatorNamePrefix: testInitiatorNamePrefix,
 	}).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
 	err = (&InitiatorGroupBindingReconciler{
 		Client:   k8sManager.GetClient(),
-		Log:      ctrl.Log.WithName("controllers").WithName("Target"),
+		Log:      ctrl.Log.WithName("controllers").WithName("InitiatorGroupBinding"),
 		Scheme:   k8sManager.GetScheme(),
-		Recorder: k8sManager.GetEventRecorderFor("target-controller"),
+		Recorder: k8sManager.GetEventRecorderFor("initiatorgroupbinding-controller"),
 		TgtAdm:   &tgtadm.TgtAdmLonghornHelper{},
 		NodeName: testNodeName,
 	}).SetupWithManager(k8sManager)

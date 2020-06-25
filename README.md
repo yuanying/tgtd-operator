@@ -41,7 +41,7 @@ spec:
 InitiatorGroup is a group of iSCSI initiators. It has nodeSelector to create initiator group from Node objects and so it means InitiatorGroup dynamically discover initiator groups.
 Usually, it should not to set `nodeSelector` because all nodes want to be initiator.
 
-```
+```yaml
 apiVersion: tgtd.unstable.cloud/v1alpha1
 kind: InitiatorGroup
 metadata:
@@ -65,7 +65,7 @@ InitiatorGroupBinding binds a Target with a InitiatorGroup directly. If the bind
 
 Sample configuration is below.
 
-```
+```yaml
 apiVersion: tgtd.unstable.cloud/v1alpha1
 kind: InitiatorGroupBinding
 metadata:

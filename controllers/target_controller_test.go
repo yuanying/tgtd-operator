@@ -60,7 +60,10 @@ var _ = Describe("TargetController", func() {
 	})
 
 	AfterEach(func() {
+		ctx := context.Background()
 		err := exec.Command("rm", "-rf", testRoot).Run()
+		Expect(err).ToNot(HaveOccurred())
+		err = k8sClient.DeleteAllOf(ctx, &tgtdv1alpha1.Target{})
 		Expect(err).ToNot(HaveOccurred())
 	})
 
