@@ -133,7 +133,7 @@ func (r *InitiatorGroupBindingReconciler) deleteStaledInitiators(log logr.Logger
 	var err error
 	iqn := target.Spec.IQN
 	actual, err := r.TgtAdm.GetTarget(iqn)
-	if err != nil {
+	if err != nil || actual == nil {
 		return fmt.Errorf("Failed to retrieve targets info: %v", iqn)
 	}
 	for _, acl := range actual.ACLs {
