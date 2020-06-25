@@ -1,6 +1,8 @@
 tgtd-operator
 =============
 
+![envtest](https://github.com/yuanying/tgtd-operator/workflows/envtest/badge.svg)
+
 tgtd-operator is a light-weight Kubernetes Operator that operates tgt daemon to manage iSCSI Target, LUN, Account, Initiator.
 
 Architecture
