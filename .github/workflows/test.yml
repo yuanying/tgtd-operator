@@ -1,4 +1,4 @@
-name: Integration test using docker build
+name: envtest
 
 on:
   pull_request:
