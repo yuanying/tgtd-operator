@@ -8,7 +8,17 @@ tgtd-operator is a light-weight Kubernetes Operator that operates tgt daemon to 
 Architecture
 ------------
 
-tgtd-operator will communicate with tgt daemon using tgtadm cli, so tgtd-operator should be placed on each nodes where tgtd is running. And tgtd-operator uses Target/InitiatorGroup/InitiatorGroupBinding/Account CRD which are stored in Kubernetes apiserver instead of using `/etc/tgt/targets.conf`.
+tgtd-operator consits of two component, one is controller and the other is node agent.
+
+![Architecture](docs/assets/architecture.png)
+
+### tgtd-operator controller
+
+Controller component manages InitiatorGroup to maintain initiator list from latest node list.
+
+### tgtd-operator node
+
+Node agent communicates with tgt daemon using tgtadm cli, so node agent should be placed on each nodes where tgtd is running. And node agent uses Target/InitiatorGroup/InitiatorGroupBinding/Account CRD which are stored in Kubernetes apiserver instead of using `/etc/tgt/targets.conf`.
 
 Concepts
 --------
