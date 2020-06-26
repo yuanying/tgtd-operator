@@ -1,3 +1,4 @@
+# syntax = docker/dockerfile:1-experimental
 
 # Image URL to use all building/pushing image targets
 IMG ?= yuanying/tgtd-operator:latest
@@ -11,11 +12,15 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
+PLATFORM=local
+DOCKER := DOCKER_BUILDKIT=1 docker
+
 all: manager
 
 # Run tests
 test: generate fmt vet manifests
-	docker build . --target unit-test
+	@$(DOCKER) build . --target unit-test \
+				   --platform ${PLATFORM}
 	# go test ./... -coverprofile cover.out
 
 # Build manager binary
@@ -57,11 +62,12 @@ generate: controller-gen
 
 # Build the docker image
 docker-build: test
-	docker build . --target bin -t ${IMG}
+	@$(DOCKER) build . --target bin -t ${IMG} \
+				   --platform ${PLATFORM}
 
 # Push the docker image
 docker-push:
-	docker push ${IMG}
+	@$(DOCKER) push ${IMG}
 
 # find or download controller-gen
 # download controller-gen if necessary
