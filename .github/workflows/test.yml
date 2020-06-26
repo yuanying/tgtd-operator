@@ -11,12 +11,14 @@ on:
 jobs:
   unit-test:
     runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILDKIT: "1"
     steps:
 
     -
       # https://github.com/actions/checkout
       name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     -
       name: UnitTest
@@ -29,5 +31,5 @@ jobs:
         push_git_tag: false
         registry: docker.pkg.github.com
         dockerfile: Dockerfile
-        build_extra_args: "--target unit-test "
+        build_extra_args: "--target unit-test --platform local"
 
