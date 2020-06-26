@@ -1,18 +1,16 @@
 # Build the manager binary
-ARG TARGETOS=linux
-ARG TARGETARCH=amd64
 
-FROM --platform=${BUILDPLATFORM} ubuntu:20.04 as base
+FROM --platform=$BUILDPLATFORM ubuntu:20.04 as base
 
+ARG BUILDARCH
 RUN apt-get update && apt-get install tgt curl -y
 
 ENV GOVERSION 1.13.12
-ENV GOARCH ${TARGETARCH:-"amd64"}
 
 ENV PATH $PATH:/usr/local/go/bin:/usr/local/kubebuilder/bin
 
-RUN cd /tmp && curl -O https://dl.google.com/go/go${GOVERSION}.linux-${GOARCH}.tar.gz && \
-    tar -C /usr/local -xzf go${GOVERSION}.linux-${GOARCH}.tar.gz
+RUN cd /tmp && curl -O https://dl.google.com/go/go${GOVERSION}.linux-${BUILDARCH}.tar.gz && \
+    tar -C /usr/local -xzf go${GOVERSION}.linux-${BUILDARCH}.tar.gz
 RUN os=$(go env GOOS) && \
     arch=$(go env GOARCH) && \
     curl -L https://go.kubebuilder.io/dl/2.3.1/${os}/${arch} | tar -xz -C /tmp/ && \
@@ -42,11 +40,12 @@ ENV CGO_ENABLED=0
 RUN go test -v ./...
 
 FROM base as builder
+ARG TARGETARCH
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} GO111MODULE=on go build -a -o tgtd-operator cmd/tgtd-operator/main.go
 
-FROM --platform=${BUILDPLATFORM} ubuntu:20.04 as bin
+FROM ubuntu:20.04 as bin
 USER root
 
 RUN apt-get update && apt-get install tgt curl -y
