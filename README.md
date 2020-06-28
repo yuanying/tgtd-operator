@@ -83,6 +83,8 @@ kind: InitiatorGroupBinding
 metadata:
   name: initiator-group-binding-sample
 spec:
-  targetRef: target-sample
-  initiatorGroupRef: initiator-group-sample
+  targetRef:
+    Name: target-sample
+  initiatorGroupRef:
+    Name: initiator-group-sample
 ```

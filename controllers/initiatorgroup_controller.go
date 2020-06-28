@@ -45,9 +45,6 @@ type InitiatorGroupReconciler struct {
 	InitiatorNamePrefix string
 }
 
-// +kubebuilder:rbac:groups=tgtd.unstable.cloud,resources=initiatorgroupbindings,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=tgtd.unstable.cloud,resources=initiatorgroupbindings/status,verbs=get;update;patch
-
 func (r *InitiatorGroupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// var err error
 	ctx := context.Background()

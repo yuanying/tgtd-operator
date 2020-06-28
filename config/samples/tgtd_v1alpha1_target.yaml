@@ -3,5 +3,8 @@ kind: Target
 metadata:
   name: target-sample
 spec:
-  # Add fields here
-  foo: bar
+  nodeName: oeilvert
+  iqn: iqn.2020-06.cloud.unstable:target1
+  luns:
+  - lun: 1
+    backingStore: /dev/zvol/tank/vol0
