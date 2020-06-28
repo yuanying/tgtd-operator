@@ -59,7 +59,7 @@ func (r *TargetReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, err
 	}
 	if target.Spec.NodeName != r.NodeName {
-		log.Info("NodeName is different -- skipping", "NodeName", r.NodeName)
+		log.Info("NodeName is different -- skipping", "TargetNodeName", target.Spec.NodeName, "NodeName", r.NodeName)
 		return ctrl.Result{}, nil
 	}
 
