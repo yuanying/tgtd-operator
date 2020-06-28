@@ -25,7 +25,7 @@ import (
 type TargetSpec struct {
 	// NodeName is a node name where the target will be placed.
 	// +kubebuilder:validation:Required
-	NodeName string `json:"targetNodeName,omitempty"`
+	NodeName string `json:"nodeName,omitempty"`
 
 	// IQN is an iqn of the target
 	// +kubebuilder:validation:Required

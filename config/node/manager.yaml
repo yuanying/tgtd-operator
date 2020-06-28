@@ -1,0 +1,87 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node
+  namespace: system
+  labels:
+    control-plane: node
+spec:
+  selector:
+    matchLabels:
+      control-plane: node
+  template:
+    metadata:
+      labels:
+        control-plane: node
+    spec:
+      hostNetwork: true
+      nodeSelector:
+        tgtd.unstable.cloud/storage: ""
+      tolerations:
+      - operator: Equal
+        effect: NoSchedule
+        key: tgtd.unstable.cloud/storage
+      serviceAccountName: node
+      containers:
+      - command:
+        - /tgtd-operator
+        - node
+        - --enable-leader-election
+        - --node-name=$(NODE_NAME)
+        image: controller:latest
+        imagePullPolicy: Always
+        name: agent
+        env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
+        volumeMounts:
+        - name: var-run-tgtd
+          mountPath: /var/run/tgtd
+      - image: controller:latest
+        imagePullPolicy: Always
+        name: tgt
+        securityContext:
+          privileged: true
+          # capabilities:
+          #   add: ["SYS_ADMIN", "SETPCAP"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 20Mi
+        volumeMounts:
+        - name: kernel-config
+          mountPath: /sys/kernel/config
+        - name: lib-modules
+          mountPath: /lib/modules
+        - name: dev
+          mountPath: /dev
+        - name: etc-tgt
+          mountPath: /etc/tgt
+        - name: var-run-tgtd
+          mountPath: /var/run/tgtd
+      terminationGracePeriodSeconds: 300
+      volumes:
+      - name: kernel-config
+        hostPath:
+          path: /sys/kernel/config
+      - name: lib-modules
+        hostPath:
+          path: /lib/modules
+      - name: dev
+        hostPath:
+          path: /dev
+      - name: etc-tgt
+        hostPath:
+          path: /etc/tgt
+      - name: var-run-tgtd
+        emptyDir: {}

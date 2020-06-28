@@ -8,5 +8,8 @@ roleRef:
   name: leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: node
+  namespace: system
+- kind: ServiceAccount
+  name: controller
   namespace: system

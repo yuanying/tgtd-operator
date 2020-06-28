@@ -49,9 +49,6 @@ type InitiatorGroupBindingReconciler struct {
 	NodeName string
 }
 
-// +kubebuilder:rbac:groups=tgtd.unstable.cloud,resources=initiatorgroupbindings,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=tgtd.unstable.cloud,resources=initiatorgroupbindings/status,verbs=get;update;patch
-
 func (r *InitiatorGroupBindingReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	log := r.Log.WithValues("target", req.NamespacedName)

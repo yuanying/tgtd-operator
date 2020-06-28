@@ -3,5 +3,7 @@ kind: InitiatorGroupBinding
 metadata:
   name: initiatorgroupbinding-sample
 spec:
-  # Add fields here
-  foo: bar
+  targetRef:
+    name: target-sample
+  initiatorGroupRef:
+    name: initiatorgroup-sample

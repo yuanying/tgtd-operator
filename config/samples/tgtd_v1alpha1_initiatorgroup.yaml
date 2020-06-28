@@ -3,5 +3,7 @@ kind: InitiatorGroup
 metadata:
   name: initiatorgroup-sample
 spec:
-  # Add fields here
-  foo: bar
+  addresses: ["172.18.0.0/16"]
+  initiatorNameStrategy:
+    type: NodeName
+    initiatorNamePrefix: "iqn.2020-04.cloud.unstable"

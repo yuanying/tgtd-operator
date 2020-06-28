@@ -63,12 +63,12 @@ spec:
                   - backingStore
                   type: object
                 type: array
-              targetNodeName:
+              nodeName:
                 description: NodeName is a node name where the target will be placed.
                 type: string
             required:
             - iqn
-            - targetNodeName
+            - nodeName
             type: object
           status:
             description: TargetStatus defines the observed state of Target

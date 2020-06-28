@@ -1,0 +1,4 @@
+resources:
+- manager.yaml
+- role.yaml
+- role_binding.yaml
