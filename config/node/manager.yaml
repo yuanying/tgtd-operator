@@ -19,9 +19,8 @@ spec:
       nodeSelector:
         tgtd.unstable.cloud/storage: ""
       tolerations:
-      - operator: Equal
+      - operator: Exists
         effect: NoSchedule
-        key: tgtd.unstable.cloud/storage
       serviceAccountName: node
       containers:
       - command:
