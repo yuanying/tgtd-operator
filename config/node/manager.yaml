@@ -28,14 +28,17 @@ spec:
         - node
         - --enable-leader-election
         - --node-name=$(NODE_NAME)
+        - --metrics-addr=$(METRICS_ADDR)
         image: controller:latest
         imagePullPolicy: Always
         name: agent
         env:
-          - name: NODE_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: spec.nodeName
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: METRICS_ADDR
+          value: ":9091"
         resources:
           limits:
             cpu: 100m
